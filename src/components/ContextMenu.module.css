@@ -1,0 +1,48 @@
+.contextMenu {
+  position: absolute;
+  background: #3d3d3d;
+  border: 1px solid #555;
+  padding: 5px;
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: row;
+  transition: width 0.3s ease;
+}
+
+.mainMenu {
+  min-width: 160px;
+}
+
+.groupButton {
+  color: #fff;
+  background-color: #444;
+  border: none;
+  padding: 5px;
+  margin: 2px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.submenu {
+  background: #3d3d3d;
+  border: 1px solid #555;
+  border-left: none;
+  padding: 5px;
+  min-width: 160px;
+}
+
+.nodeButton {
+  color: #fff;
+  background-color: #555;
+  border: none;
+  padding: 5px;
+  margin: 2px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
