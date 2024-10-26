@@ -1,48 +1,48 @@
 .contextMenu {
   position: absolute;
-  background: #3d3d3d;
+  background-color: #2d2d2d;
   border: 1px solid #555;
+  border-radius: 4px;
   padding: 5px;
-  max-height: 300px;
-  overflow-y: auto;
+  z-index: 1000;
   display: flex;
-  flex-direction: row;
-  transition: width 0.3s ease;
 }
 
 .mainMenu {
-  min-width: 160px;
-}
-
-.groupButton {
-  color: #fff;
-  background-color: #444;
-  border: none;
-  padding: 5px;
-  margin: 2px;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
 }
 
 .submenu {
-  background: #3d3d3d;
-  border: 1px solid #555;
-  border-left: none;
-  padding: 5px;
-  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  margin-left: 5px;
+  border-left: 1px solid #555;
+  padding-left: 5px;
 }
 
-.nodeButton {
-  color: #fff;
-  background-color: #555;
+.groupButton, .nodeButton {
+  background: none;
   border: none;
-  padding: 5px;
-  margin: 2px;
+  color: #fff;
+  padding: 5px 10px;
+  text-align: left;
   cursor: pointer;
   width: 100%;
-  text-align: left;
+  display: flex;
+  align-items: center;
+}
+
+.groupButton:hover, .nodeButton:hover {
+  background-color: #3d3d3d;
+}
+
+.arrow {
+  margin-left: auto;
+}
+
+.icon {
+  margin-right: 8px;
+  width: 16px;
+  text-align: center;
 }
