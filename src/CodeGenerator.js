@@ -2,7 +2,12 @@ class CodeGenerator {
   constructor(nodes, edges, settings) {
     this.nodes = nodes;
     this.edges = edges;
-    this.settings = settings;
+    this.settings = settings || {
+      useStrict: true,
+      useSemicolons: true,
+      useConst: false,
+      generateComments: true,
+    };
     this.code = '';
     this.indentLevel = 0;
     this.hasAsyncOperations = false;
@@ -14,13 +19,13 @@ class CodeGenerator {
   generate() {
     this.code = '';
     if (this.settings.useStrict) {
-      this.addLine('"use strict";');
+      this.addLine('"use strict"');
       this.addLine();
     }
     this.generateImports();
     this.generateVariableDeclarations();
     this.generateMainFunction();
-    return this.code;
+    return this.code.trim(); // Trim to remove any trailing newlines
   }
 
   generateImports() {
@@ -62,9 +67,9 @@ class CodeGenerator {
     });
 
     this.indentLevel--;
-    this.addLine("}");
+    this.addLine('}');
     this.addLine();
-    this.addLine("main();");
+    this.addLine('main()');
   }
 
   generateNodeCodeSequence(node) {
@@ -325,7 +330,13 @@ class CodeGenerator {
   }
 
   addLine(line = '') {
-    this.code += '  '.repeat(this.indentLevel) + line + (this.settings.useSemicolons && line !== '' ? ';' : '') + '\n';
+    if (line === '') {
+      this.code += '\n';
+    } else {
+      const indentation = '  '.repeat(this.indentLevel);
+      const semicolon = this.settings.useSemicolons && this.shouldAddSemicolon(line) ? ';' : '';
+      this.code += `${indentation}${line}${semicolon}\n`;
+    }
   }
 
   executeNode(node, debug = false) {
@@ -567,6 +578,24 @@ class CodeGenerator {
         this.nodeOutputs.set(node.id, '');
       }
     }
+  }
+
+  shouldAddSemicolon(line) {
+    // Don't add semicolons after these statements
+    const noSemicolonPatterns = [
+      /^function/,
+      /^class/,
+      /^if/,
+      /^for/,
+      /^while/,
+      /^switch/,
+      /^try/,
+      /^catch/,
+      /^finally/,
+      /\{$/,
+      /\}$/
+    ];
+    return !noSemicolonPatterns.some(pattern => pattern.test(line.trim()));
   }
 }
 
