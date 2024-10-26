@@ -1,7 +1,8 @@
 class CodeGenerator {
-  constructor(nodes, edges) {
+  constructor(nodes, edges, settings) {
     this.nodes = nodes;
     this.edges = edges;
+    this.settings = settings;
     this.code = '';
     this.indentLevel = 0;
     this.hasAsyncOperations = false;
@@ -12,6 +13,10 @@ class CodeGenerator {
 
   generate() {
     this.code = '';
+    if (this.settings.useStrict) {
+      this.addLine('"use strict";');
+      this.addLine();
+    }
     this.generateImports();
     this.generateVariableDeclarations();
     this.generateMainFunction();
@@ -29,11 +34,11 @@ class CodeGenerator {
       if (node.type === 'Variable') {
         const { name, type, initialValue } = node.properties;
         if (name && type && !declaredVariables.has(name)) {
-          let declaration = `let ${name}`;
+          let declaration = `${this.settings.useConst ? 'const' : 'let'} ${name}`;
           if (initialValue !== undefined && initialValue !== '') {
             declaration += ` = ${this.getTypedValue(type, initialValue)}`;
           }
-          this.addLine(declaration + ';');
+          this.addLine(declaration);
           this.variables.set(name, type);
           declaredVariables.add(name);
         }
@@ -81,6 +86,10 @@ class CodeGenerator {
   }
 
   generateNodeCode(node) {
+    if (this.settings.generateComments) {
+      this.addLine(`// Processing ${node.type} node`);
+    }
+
     switch (node.type) {
       case 'OnStart':
         // OnStart doesn't generate code, it's just a starting point
@@ -137,6 +146,11 @@ class CodeGenerator {
       default:
         this.addLine(`// TODO: Implement ${node.type}`);
     }
+
+    if (this.settings.generateComments) {
+      this.addLine(`// Finished processing ${node.type} node`);
+      this.addLine();
+    }
   }
 
   findNextControlNode(node) {
@@ -154,11 +168,11 @@ class CodeGenerator {
   handleLogNode(node) {
     const message = this.getNodeInputValue(node, 1);
     if (message !== undefined) {
-      this.addLine(`console.${node.properties.logType || 'log'}(${message});`);
+      this.addLine(`console.${node.properties.logType || 'log'}(${message})`);
     } else if (node.properties.message) {
-      this.addLine(`console.${node.properties.logType || 'log'}(${JSON.stringify(node.properties.message)});`);
+      this.addLine(`console.${node.properties.logType || 'log'}(${JSON.stringify(node.properties.message)})`);
     } else {
-      this.addLine(`console.${node.properties.logType || 'log'}("Empty log message");`);
+      this.addLine(`console.${node.properties.logType || 'log'}("Empty log message")`);
     }
   }
 
@@ -311,7 +325,7 @@ class CodeGenerator {
   }
 
   addLine(line = '') {
-    this.code += '  '.repeat(this.indentLevel) + line + '\n';
+    this.code += '  '.repeat(this.indentLevel) + line + (this.settings.useSemicolons && line !== '' ? ';' : '') + '\n';
   }
 
   executeNode(node, debug = false) {

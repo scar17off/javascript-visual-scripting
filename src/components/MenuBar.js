@@ -9,7 +9,7 @@ const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible
       display: 'flex',
       borderBottom: isDarkTheme ? '1px solid #555' : '1px solid #999'
     }}>
-      {['File', 'Edit', 'View', 'Run', 'Help'].map((menu) => (
+      {['File', 'Edit', 'View', 'Export', 'Run', 'Help'].map((menu) => (
         <div key={menu} style={{ position: 'relative' }}>
           <button
             onClick={() => handleMenuClick(menu)}
@@ -38,7 +38,7 @@ const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible
               {menu === 'File' && [
                 <button key="new" onClick={() => handleMenuItemClick('new')} style={{width: '100%', textAlign: 'left'}}>New</button>,
                 <button key="open" onClick={() => handleMenuItemClick('open')} style={{width: '100%', textAlign: 'left'}}>Open</button>,
-                <button key="save" onClick={() => handleMenuItemClick('save')} style={{width: '100%', textAlign: 'left'}}>Save</button>
+                <button key="settings" onClick={() => handleMenuItemClick('projectSettings')} style={{width: '100%', textAlign: 'left'}}>Settings</button>,
               ]}
               {menu === 'Edit' && [
                 <button key="undo" onClick={() => handleMenuItemClick('undo')} style={{width: '100%', textAlign: 'left'}}>Undo</button>,
@@ -62,6 +62,12 @@ const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible
                 <button key="toggleTheme" onClick={toggleTheme} style={{width: '100%', textAlign: 'left'}}>
                   {isDarkTheme ? 'Light Theme' : 'Dark Theme'}
                 </button>
+              ]}
+              {menu === 'Export' && [
+                <button key="exportImage" onClick={() => handleMenuItemClick('exportImage')} style={{width: '100%', textAlign: 'left'}}>Export as Image</button>,
+                <button key="exportSVG" onClick={() => handleMenuItemClick('exportSVG')} style={{width: '100%', textAlign: 'left'}}>Export as SVG</button>,
+                <button key="exportJSON" onClick={() => handleMenuItemClick('exportJSON')} style={{width: '100%', textAlign: 'left'}}>Export as JSON</button>,
+                <button key="exportJavaScript" onClick={() => handleMenuItemClick('exportJavaScript')} style={{width: '100%', textAlign: 'left'}}>Export as JavaScript</button>
               ]}
               {menu === 'Run' && [
                 <button key="runWithoutDebugging" onClick={() => handleMenuItemClick('runWithoutDebugging')} style={{width: '100%', textAlign: 'left'}}>Run without debugging</button>,

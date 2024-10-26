@@ -2,10 +2,13 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import MenuBar from './components/MenuBar';
 import ContextMenu from './components/ContextMenu';
 import Minimap from './components/Minimap';
+import Tabs from './components/Tabs';
+import SettingsTab from './components/SettingsTab';
 import Camera from './Camera';
 import CodeGenerator from './CodeGenerator';
 import { nodeTypes, nodeGroups } from './nodeDefinitions';
 import examples from './examples';
+import { saveAs } from 'file-saver';
 
 const GRID_SIZE = 20;
 
@@ -27,11 +30,19 @@ const VisualScripting = () => {
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
   const [isGridVisible, setIsGridVisible] = useState(true);
-  const [isMinimapVisible, setIsMinimapVisible] = useState(true);
+  const [isMinimapVisible, setIsMinimapVisible] = useState(false);
   const [copiedNodes, setCopiedNodes] = useState([]);
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [tabs, setTabs] = useState([{ id: 'untitled-1', title: 'Untitled-1', type: 'Export' }]);
+  const [activeTab, setActiveTab] = useState('untitled-1');
+  const [codeGeneratorSettings, setCodeGeneratorSettings] = useState({
+    useStrict: true,
+    useSemicolons: true,
+    useConst: false,
+    generateComments: true,
+  });
   // #endregion
 
   // #region Drawing Functions
@@ -124,7 +135,11 @@ const VisualScripting = () => {
 
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return; // Add this check
+
     const ctx = canvas.getContext('2d');
+    if (!ctx) return; // Add this check as well
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
@@ -399,8 +414,11 @@ const VisualScripting = () => {
   };
 
   const handleWheel = useCallback((e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     e.preventDefault();
-    const rect = canvasRef.current.getBoundingClientRect();
+    const rect = canvas.getBoundingClientRect();
     const { x, y } = camera.screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
     const factor = e.deltaY > 0 ? 0.9 : 1.1;
     camera.zoom(factor, x, y);
@@ -643,10 +661,46 @@ const VisualScripting = () => {
       case 'selectAll':
         setSelectedNodes([...nodes]);
         break;
+      case 'projectSettings':
+        openSettings();
+        break;
+      case 'exportImage':
+        exportAsImage();
+        break;
+      case 'exportSVG':
+        exportAsSVG();
+        break;
+      case 'exportJSON':
+        exportAsJSON();
+        break;
+      case 'exportJavaScript':
+        exportAsJavaScript();
+        break;
       default:
         console.log(`Unhandled menu action: ${action}`);
     }
     setMenuOpen(null);
+  };
+
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+  };
+
+  const handleTabClose = (tabId) => {
+    if (tabId === 'untitled-1') return; // Don't close the default tab
+    const newTabs = tabs.filter(tab => tab.id !== tabId);
+    setTabs(newTabs);
+    if (activeTab === tabId) {
+      setActiveTab(newTabs[newTabs.length - 1].id);
+    }
+  };
+
+  const openSettings = () => {
+    const settingsTabId = 'settings';
+    if (!tabs.some(tab => tab.id === settingsTabId)) {
+      setTabs([...tabs, { id: settingsTabId, title: 'Settings', type: 'settings' }]);
+    }
+    setActiveTab(settingsTabId);
   };
   // #endregion
 
@@ -657,7 +711,7 @@ const VisualScripting = () => {
   };
 
   const generateCode = () => {
-    const codeGenerator = new CodeGenerator(nodes, edges);
+    const codeGenerator = new CodeGenerator(nodes, edges, codeGeneratorSettings);
     const generatedCode = codeGenerator.generate();
     console.log('Generated Code:');
     console.log(generatedCode);
@@ -666,16 +720,22 @@ const VisualScripting = () => {
 
   // #region Effects
   useEffect(() => {
-    drawCanvas();
-  }, [drawCanvas]);
+    if (activeTab === 'untitled-1') {
+      drawCanvas();
+    }
+  }, [drawCanvas, activeTab]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    canvas.addEventListener('wheel', handleWheel, { passive: false });
-    return () => {
-      canvas.removeEventListener('wheel', handleWheel);
-    };
-  }, [handleWheel]);
+    if (activeTab === 'untitled-1') {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.addEventListener('wheel', handleWheel, { passive: false });
+        return () => {
+          canvas.removeEventListener('wheel', handleWheel);
+        };
+      }
+    }
+  }, [handleWheel, activeTab]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -700,6 +760,195 @@ const VisualScripting = () => {
   const toggleTheme = () => {
     setIsDarkTheme(prevTheme => !prevTheme);
   };
+
+  const toggleGrid = () => setIsGridVisible(!isGridVisible);
+  const toggleMinimap = () => setIsMinimapVisible(!isMinimapVisible);
+
+  // Add this function near the other state-changing functions
+  const updateCodeGeneratorSettings = (setting, value) => {
+    setCodeGeneratorSettings(prevSettings => ({
+      ...prevSettings,
+      [setting]: value,
+    }));
+  };
+
+  // #region Export Functions
+  const exportAsImage = () => {
+    const canvas = canvasRef.current;
+    canvas.toBlob((blob) => {
+      saveAs(blob, 'visual_script.png');
+    });
+  };
+
+  const exportAsSVG = () => {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    const canvasRect = canvasRef.current.getBoundingClientRect();
+    svg.setAttribute("width", canvasRect.width);
+    svg.setAttribute("height", canvasRect.height);
+    svg.setAttribute("viewBox", `0 0 ${canvasRect.width} ${canvasRect.height}`);
+
+    // Create a background rectangle
+    const background = document.createElementNS(svgNS, "rect");
+    background.setAttribute("width", "100%");
+    background.setAttribute("height", "100%");
+    background.setAttribute("fill", isDarkTheme ? "#2d2d2d" : "#e0e0e0");
+    svg.appendChild(background);
+
+    // Draw grid if visible
+    if (isGridVisible) {
+      const gridGroup = document.createElementNS(svgNS, "g");
+      gridGroup.setAttribute("stroke", isDarkTheme ? "#3a3a3a" : "#d0d0d0");
+      gridGroup.setAttribute("stroke-width", "1");
+
+      for (let x = 0; x <= canvasRect.width; x += GRID_SIZE) {
+        const line = document.createElementNS(svgNS, "line");
+        line.setAttribute("x1", x);
+        line.setAttribute("y1", 0);
+        line.setAttribute("x2", x);
+        line.setAttribute("y2", canvasRect.height);
+        gridGroup.appendChild(line);
+      }
+
+      for (let y = 0; y <= canvasRect.height; y += GRID_SIZE) {
+        const line = document.createElementNS(svgNS, "line");
+        line.setAttribute("x1", 0);
+        line.setAttribute("y1", y);
+        line.setAttribute("x2", canvasRect.width);
+        line.setAttribute("y2", y);
+        gridGroup.appendChild(line);
+      }
+
+      svg.appendChild(gridGroup);
+    }
+
+    // Draw edges
+    const edgeGroup = document.createElementNS(svgNS, "g");
+    edges.forEach(edge => {
+      const startNode = nodes.find(n => n.id === edge.start.nodeId);
+      const endNode = nodes.find(n => n.id === edge.end.nodeId);
+      if (startNode && endNode) {
+        const startDimensions = getNodeDimensions(startNode, canvasRef.current.getContext('2d'));
+        const endDimensions = getNodeDimensions(endNode, canvasRef.current.getContext('2d'));
+
+        const startPort = edge.start.isInput
+          ? { x: startNode.x, y: startNode.y + startDimensions.portStartY + edge.start.index * 20 }
+          : { x: startNode.x + startDimensions.width, y: startNode.y + startDimensions.portStartY + edge.start.index * 20 };
+        const endPort = edge.end.isInput
+          ? { x: endNode.x, y: endNode.y + endDimensions.portStartY + edge.end.index * 20 }
+          : { x: endNode.x + endDimensions.width, y: endNode.y + endDimensions.portStartY + edge.end.index * 20 };
+
+        const dx = endPort.x - startPort.x;
+        const dy = endPort.y - startPort.y;
+        const controlPoint1 = { x: startPort.x + dx * 0.5, y: startPort.y };
+        const controlPoint2 = { x: endPort.x - dx * 0.5, y: endPort.y };
+
+        const path = document.createElementNS(svgNS, "path");
+        path.setAttribute("d", `M ${startPort.x} ${startPort.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${endPort.x} ${endPort.y}`);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "#666");
+        path.setAttribute("stroke-width", "2");
+        edgeGroup.appendChild(path);
+      }
+    });
+    svg.appendChild(edgeGroup);
+
+    // Draw nodes
+    const nodeGroup = document.createElementNS(svgNS, "g");
+    nodes.forEach(node => {
+      const nodeType = nodeTypes[node.type];
+      const { width, height, portStartY } = getNodeDimensions(node, canvasRef.current.getContext('2d'));
+
+      const nodeRect = document.createElementNS(svgNS, "rect");
+      nodeRect.setAttribute("x", node.x);
+      nodeRect.setAttribute("y", node.y);
+      nodeRect.setAttribute("width", width);
+      nodeRect.setAttribute("height", height);
+      nodeRect.setAttribute("fill", nodeType.color);
+      nodeRect.setAttribute("stroke", selectedNodes.includes(node) ? "#FFFF00" : "#000000");
+      nodeRect.setAttribute("stroke-width", "2");
+      nodeGroup.appendChild(nodeRect);
+
+      // Node title
+      const title = document.createElementNS(svgNS, "text");
+      title.setAttribute("x", node.x + 10);
+      title.setAttribute("y", node.y + 20);
+      title.setAttribute("fill", "white");
+      title.setAttribute("font-family", "Arial");
+      title.setAttribute("font-size", "14px");
+      title.setAttribute("font-weight", "bold");
+      title.textContent = node.type;
+      nodeGroup.appendChild(title);
+
+      // Node description (simplified, not wrapping text)
+      const description = document.createElementNS(svgNS, "text");
+      description.setAttribute("x", node.x + 10);
+      description.setAttribute("y", node.y + 40);
+      description.setAttribute("fill", "white");
+      description.setAttribute("font-family", "Arial");
+      description.setAttribute("font-size", "10px");
+      description.textContent = nodeType.description;
+      nodeGroup.appendChild(description);
+
+      // Input and output ports
+      nodeType.inputs.forEach((input, i) => {
+        const circle = document.createElementNS(svgNS, "circle");
+        circle.setAttribute("cx", node.x);
+        circle.setAttribute("cy", node.y + portStartY + i * 20);
+        circle.setAttribute("r", "5");
+        circle.setAttribute("fill", "#FFA500");
+        nodeGroup.appendChild(circle);
+
+        const text = document.createElementNS(svgNS, "text");
+        text.setAttribute("x", node.x + 10);
+        text.setAttribute("y", node.y + portStartY + 5 + i * 20);
+        text.setAttribute("fill", "white");
+        text.setAttribute("font-family", "Arial");
+        text.setAttribute("font-size", "10px");
+        text.textContent = `${input.type === 'control' ? '▶' : '●'} ${input.name}`;
+        nodeGroup.appendChild(text);
+      });
+
+      nodeType.outputs.forEach((output, i) => {
+        const circle = document.createElementNS(svgNS, "circle");
+        circle.setAttribute("cx", node.x + width);
+        circle.setAttribute("cy", node.y + portStartY + i * 20);
+        circle.setAttribute("r", "5");
+        circle.setAttribute("fill", "#FFA500");
+        nodeGroup.appendChild(circle);
+
+        const text = document.createElementNS(svgNS, "text");
+        text.setAttribute("x", node.x + width - 70);
+        text.setAttribute("y", node.y + portStartY + 5 + i * 20);
+        text.setAttribute("fill", "white");
+        text.setAttribute("font-family", "Arial");
+        text.setAttribute("font-size", "10px");
+        text.textContent = `${output.name} ${output.type === 'control' ? '▶' : '●'}`;
+        nodeGroup.appendChild(text);
+      });
+    });
+    svg.appendChild(nodeGroup);
+
+    // Convert SVG to string and save
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svg);
+    const blob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
+    saveAs(blob, "visual_script.svg");
+  };
+
+  const exportAsJSON = () => {
+    const projectData = JSON.stringify({ nodes, edges });
+    const blob = new Blob([projectData], { type: 'application/json' });
+    saveAs(blob, 'visual_script.json');
+  };
+
+  const exportAsJavaScript = () => {
+    const codeGenerator = new CodeGenerator(nodes, edges);
+    const generatedCode = codeGenerator.generate();
+    const blob = new Blob([generatedCode], { type: 'text/javascript' });
+    saveAs(blob, 'generated_script.js');
+  };
+  // #endregion
 
   // #region Render
   return (
@@ -727,95 +976,117 @@ const VisualScripting = () => {
         isDarkTheme={isDarkTheme}
         toggleTheme={toggleTheme}
       />
+      <Tabs
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabClick={handleTabClick}
+        onTabClose={handleTabClose}
+        isDarkTheme={isDarkTheme}
+      />
       <div style={{ flex: 1, position: 'relative' }}>
-        <canvas
-          ref={canvasRef}
-          width={canvasSize.width}
-          height={canvasSize.height - 30}
-          onContextMenu={handleContextMenu}
-          onClick={handleCanvasClick}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', display: 'block' }}
-        />
-        <ContextMenu
-          visible={contextMenu.visible}
-          x={contextMenu.x}
-          y={contextMenu.y}
-          nodeTypes={nodeTypes}
-          nodeGroups={nodeGroups}
-          addNode={addNode}
-          camera={camera}
-        />
-        {selectedNodes.length === 1 && (
-          <div style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            background: isDarkTheme ? '#3d3d3d' : '#d0d0d0',
-            border: isDarkTheme ? '1px solid #555' : '1px solid #999',
-            padding: '10px',
-            color: isDarkTheme ? '#fff' : '#000',
-          }}>
-            <h3>{selectedNodes[0].type} Properties</h3>
-            {nodeTypes[selectedNodes[0].type].properties && nodeTypes[selectedNodes[0].type].properties.map(prop => (
-              <div key={prop.name}>
-                <label>
-                  {prop.name}:
-                  {prop.type === 'select' ? (
-                    <select
-                      value={selectedNodes[0].properties[prop.name] || prop.default}
-                      onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
-                      style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
-                    >
-                      {prop.options.map(option => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  ) : prop.type === 'number' ? (
-                    <input
-                      type="number"
-                      value={selectedNodes[0].properties[prop.name] || prop.default}
-                      onChange={(e) => updateNodeProperty(prop.name, parseFloat(e.target.value))}
-                      style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      value={selectedNodes[0].properties[prop.name] || prop.default}
-                      onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
-                      style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
-                    />
-                  )}
-                </label>
-              </div>
-            ))}
-          </div>
-        )}
-        {isMinimapVisible && (
-          <div style={{ 
-            position: 'absolute', 
-            right: 0, 
-            top: 0, 
-            width: '200px', 
-            height: canvasSize.height - 30, 
-            backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0', 
-            borderLeft: isDarkTheme ? '1px solid #555' : '1px solid #999' 
-          }}>
-            <Minimap
-              nodes={nodes}
-              edges={edges}
-              camera={camera}
-              canvasSize={canvasSize}
-              getNodeDimensions={getNodeDimensions}
-              nodeTypes={nodeTypes}
-              wrapText={wrapText}
-              isDarkTheme={isDarkTheme}
+        {activeTab === 'untitled-1' ? (
+          <>
+            <canvas
+              ref={canvasRef}
+              width={canvasSize.width}
+              height={canvasSize.height - 65} // 30px for MenuBar + 35px for Tabs
+              onContextMenu={handleContextMenu}
+              onClick={handleCanvasClick}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', display: 'block' }}
             />
-          </div>
-        )}
+            <ContextMenu
+              visible={contextMenu.visible}
+              x={contextMenu.x}
+              y={contextMenu.y}
+              nodeTypes={nodeTypes}
+              nodeGroups={nodeGroups}
+              addNode={addNode}
+              camera={camera}
+            />
+            {selectedNodes.length === 1 && (
+              <div style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                background: isDarkTheme ? '#3d3d3d' : '#d0d0d0',
+                border: isDarkTheme ? '1px solid #555' : '1px solid #999',
+                padding: '10px',
+                color: isDarkTheme ? '#fff' : '#000',
+              }}>
+                <h3>{selectedNodes[0].type} Properties</h3>
+                {nodeTypes[selectedNodes[0].type].properties && nodeTypes[selectedNodes[0].type].properties.map(prop => (
+                  <div key={prop.name}>
+                    <label>
+                      {prop.name}:
+                      {prop.type === 'select' ? (
+                        <select
+                          value={selectedNodes[0].properties[prop.name] || prop.default}
+                          onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
+                          style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
+                        >
+                          {prop.options.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      ) : prop.type === 'number' ? (
+                        <input
+                          type="number"
+                          value={selectedNodes[0].properties[prop.name] || prop.default}
+                          onChange={(e) => updateNodeProperty(prop.name, parseFloat(e.target.value))}
+                          style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={selectedNodes[0].properties[prop.name] || prop.default}
+                          onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
+                          style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
+                        />
+                      )}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+            {isMinimapVisible && (
+              <div style={{ 
+                position: 'absolute', 
+                right: 0, 
+                top: 0, 
+                width: '200px', 
+                height: canvasSize.height - 30, 
+                backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0', 
+                borderLeft: isDarkTheme ? '1px solid #555' : '1px solid #999' 
+              }}>
+                <Minimap
+                  nodes={nodes}
+                  edges={edges}
+                  camera={camera}
+                  canvasSize={canvasSize}
+                  getNodeDimensions={getNodeDimensions}
+                  nodeTypes={nodeTypes}
+                  wrapText={wrapText}
+                  isDarkTheme={isDarkTheme}
+                />
+              </div>
+            )}
+          </>
+        ) : activeTab === 'settings' ? (
+          <SettingsTab
+            isDarkTheme={isDarkTheme}
+            toggleTheme={toggleTheme}
+            isGridVisible={isGridVisible}
+            toggleGrid={toggleGrid}
+            isMinimapVisible={isMinimapVisible}
+            toggleMinimap={toggleMinimap}
+            codeGeneratorSettings={codeGeneratorSettings}
+            updateCodeGeneratorSettings={updateCodeGeneratorSettings}
+          />
+        ) : null}
       </div>
     </div>
   );
