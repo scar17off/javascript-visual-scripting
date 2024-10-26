@@ -9,7 +9,9 @@ const SettingsTab = ({
   isMinimapVisible, 
   toggleMinimap,
   codeGeneratorSettings,
-  updateCodeGeneratorSettings
+  updateCodeGeneratorSettings,
+  isNodeRoundingEnabled,
+  toggleNodeRounding
 }) => {
   const [gridSize, setGridSize] = useState(20);
 
@@ -76,6 +78,11 @@ const SettingsTab = ({
           checked={isMinimapVisible}
           onChange={toggleMinimap}
           label="Show Minimap"
+        />
+        <CustomCheckbox
+          checked={isNodeRoundingEnabled}
+          onChange={toggleNodeRounding}
+          label="Enable Node Rounding"
         />
       </div>
 

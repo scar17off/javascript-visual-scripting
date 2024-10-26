@@ -1,6 +1,6 @@
 import React from 'react';
 
-const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible, isMinimapVisible, isDarkTheme, toggleTheme }) => {
+const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible, isMinimapVisible, isDarkTheme, toggleTheme, isNodeRoundingEnabled, toggleNodeRounding }) => {
   return (
     <div style={{
       backgroundColor: isDarkTheme ? '#333' : '#e0e0e0',
@@ -61,6 +61,9 @@ const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible
                 </button>,
                 <button key="toggleTheme" onClick={toggleTheme} style={{width: '100%', textAlign: 'left'}}>
                   {isDarkTheme ? 'Light Theme' : 'Dark Theme'}
+                </button>,
+                <button key="toggleNodeRounding" onClick={() => handleMenuItemClick('toggleNodeRounding')} style={{width: '100%', textAlign: 'left'}}>
+                  {isNodeRoundingEnabled ? 'Disable Node Rounding' : 'Enable Node Rounding'}
                 </button>
               ]}
               {menu === 'Export' && [

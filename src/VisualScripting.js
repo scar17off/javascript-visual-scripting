@@ -43,6 +43,7 @@ const VisualScripting = () => {
     useConst: false,
     generateComments: true,
   });
+  const [isNodeRoundingEnabled, setIsNodeRoundingEnabled] = useState(true);
   // #endregion
 
   // #region Drawing Functions
@@ -202,12 +203,28 @@ const VisualScripting = () => {
 
       // Node body
       ctx.fillStyle = nodeType.color;
-      ctx.fillRect(node.x, node.y, width, height);
-
-      // Node outline (highlight if selected)
       ctx.strokeStyle = selectedNodes.includes(node) ? '#FFFF00' : '#000000';
       ctx.lineWidth = 2;
-      ctx.strokeRect(node.x, node.y, width, height);
+
+      if (isNodeRoundingEnabled) {
+        const radius = 10;
+        ctx.beginPath();
+        ctx.moveTo(node.x + radius, node.y);
+        ctx.lineTo(node.x + width - radius, node.y);
+        ctx.quadraticCurveTo(node.x + width, node.y, node.x + width, node.y + radius);
+        ctx.lineTo(node.x + width, node.y + height - radius);
+        ctx.quadraticCurveTo(node.x + width, node.y + height, node.x + width - radius, node.y + height);
+        ctx.lineTo(node.x + radius, node.y + height);
+        ctx.quadraticCurveTo(node.x, node.y + height, node.x, node.y + height - radius);
+        ctx.lineTo(node.x, node.y + radius);
+        ctx.quadraticCurveTo(node.x, node.y, node.x + radius, node.y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillRect(node.x, node.y, width, height);
+        ctx.strokeRect(node.x, node.y, width, height);
+      }
 
       let currentHeight = 0;
 
@@ -289,7 +306,7 @@ const VisualScripting = () => {
     }
 
     ctx.restore();
-  }, [nodes, edges, connecting, mousePosition, drawGrid, camera, selectedNodes, getNodeDimensions]);
+  }, [nodes, edges, connecting, mousePosition, drawGrid, camera, selectedNodes, getNodeDimensions, isNodeRoundingEnabled]);
   // #endregion
 
   // #region Event Handlers
@@ -682,6 +699,9 @@ const VisualScripting = () => {
       case 'exportJavaScript':
         exportAsJavaScript();
         break;
+      case 'toggleNodeRounding':
+        toggleNodeRounding();
+        break;
       default:
         console.log(`Unhandled menu action: ${action}`);
     }
@@ -774,6 +794,10 @@ const VisualScripting = () => {
       ...prevSettings,
       [setting]: value,
     }));
+  };
+
+  const toggleNodeRounding = () => {
+    setIsNodeRoundingEnabled(!isNodeRoundingEnabled);
   };
 
   // #region Export Functions
@@ -979,6 +1003,8 @@ const VisualScripting = () => {
         isMinimapVisible={isMinimapVisible}
         isDarkTheme={isDarkTheme}
         toggleTheme={toggleTheme}
+        isNodeRoundingEnabled={isNodeRoundingEnabled}
+        toggleNodeRounding={toggleNodeRounding}
       />
       <Tabs
         tabs={tabs}
@@ -1089,6 +1115,8 @@ const VisualScripting = () => {
             toggleMinimap={toggleMinimap}
             codeGeneratorSettings={codeGeneratorSettings}
             updateCodeGeneratorSettings={updateCodeGeneratorSettings}
+            isNodeRoundingEnabled={isNodeRoundingEnabled}
+            toggleNodeRounding={toggleNodeRounding}
           />
         ) : null}
       </div>
