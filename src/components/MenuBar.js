@@ -1,21 +1,22 @@
 import React from 'react';
 
-const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible, isMinimapVisible }) => {
+const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible, isMinimapVisible, isDarkTheme, toggleTheme }) => {
   return (
     <div style={{
-      backgroundColor: '#333',
+      backgroundColor: isDarkTheme ? '#333' : '#e0e0e0',
+      color: isDarkTheme ? '#fff' : '#000',
       padding: '5px',
       display: 'flex',
-      borderBottom: '1px solid #555'
+      borderBottom: isDarkTheme ? '1px solid #555' : '1px solid #999'
     }}>
       {['File', 'Edit', 'View', 'Run', 'Help'].map((menu) => (
         <div key={menu} style={{ position: 'relative' }}>
           <button
             onClick={() => handleMenuClick(menu)}
             style={{
-              backgroundColor: menuOpen === menu ? '#555' : 'transparent',
+              backgroundColor: menuOpen === menu ? (isDarkTheme ? '#555' : '#ccc') : 'transparent',
               border: 'none',
-              color: '#fff',
+              color: isDarkTheme ? '#fff' : '#000',
               padding: '5px 10px',
               cursor: 'pointer',
               width: '100%',
@@ -29,8 +30,8 @@ const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible
               position: 'absolute',
               top: '100%',
               left: 0,
-              backgroundColor: '#444',
-              border: '1px solid #555',
+              backgroundColor: isDarkTheme ? '#444' : '#f0f0f0',
+              border: isDarkTheme ? '1px solid #555' : '1px solid #999',
               zIndex: 1000,
               whiteSpace: 'nowrap'
             }}>
@@ -57,6 +58,9 @@ const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible
                 </button>,
                 <button key="toggleMinimap" onClick={() => handleMenuItemClick('toggleMinimap')} style={{width: '100%', textAlign: 'left'}}>
                   {isMinimapVisible ? 'Hide Minimap' : 'Show Minimap'}
+                </button>,
+                <button key="toggleTheme" onClick={toggleTheme} style={{width: '100%', textAlign: 'left'}}>
+                  {isDarkTheme ? 'Light Theme' : 'Dark Theme'}
                 </button>
               ]}
               {menu === 'Run' && [

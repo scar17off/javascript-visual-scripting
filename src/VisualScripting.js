@@ -31,6 +31,7 @@ const VisualScripting = () => {
   const [copiedNodes, setCopiedNodes] = useState([]);
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
   // #endregion
 
   // #region Drawing Functions
@@ -695,11 +696,17 @@ const VisualScripting = () => {
   }, []);
   // #endregion
 
+  // Add this function near the other state-changing functions
+  const toggleTheme = () => {
+    setIsDarkTheme(prevTheme => !prevTheme);
+  };
+
   // #region Render
   return (
     <div 
       style={{ 
-        backgroundColor: '#1e1e1e', 
+        backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0', 
+        color: isDarkTheme ? '#fff' : '#000',
         width: '100vw', 
         height: '100vh', 
         overflow: 'hidden',
@@ -717,6 +724,8 @@ const VisualScripting = () => {
         handleMenuItemClick={handleMenuItemClick}
         isGridVisible={isGridVisible}
         isMinimapVisible={isMinimapVisible}
+        isDarkTheme={isDarkTheme}
+        toggleTheme={toggleTheme}
       />
       <div style={{ flex: 1, position: 'relative' }}>
         <canvas
@@ -729,7 +738,7 @@ const VisualScripting = () => {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          style={{ backgroundColor: '#2d2d2d', display: 'block' }}
+          style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', display: 'block' }}
         />
         <ContextMenu
           visible={contextMenu.visible}
@@ -745,10 +754,10 @@ const VisualScripting = () => {
             position: 'absolute',
             top: '10px',
             right: '10px',
-            background: '#3d3d3d',
-            border: '1px solid #555',
+            background: isDarkTheme ? '#3d3d3d' : '#d0d0d0',
+            border: isDarkTheme ? '1px solid #555' : '1px solid #999',
             padding: '10px',
-            color: '#fff',
+            color: isDarkTheme ? '#fff' : '#000',
           }}>
             <h3>{selectedNodes[0].type} Properties</h3>
             {nodeTypes[selectedNodes[0].type].properties && nodeTypes[selectedNodes[0].type].properties.map(prop => (
@@ -759,7 +768,7 @@ const VisualScripting = () => {
                     <select
                       value={selectedNodes[0].properties[prop.name] || prop.default}
                       onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
-                      style={{ backgroundColor: '#2d2d2d', color: '#fff', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
+                      style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
                     >
                       {prop.options.map(option => (
                         <option key={option} value={option}>{option}</option>
@@ -770,14 +779,14 @@ const VisualScripting = () => {
                       type="number"
                       value={selectedNodes[0].properties[prop.name] || prop.default}
                       onChange={(e) => updateNodeProperty(prop.name, parseFloat(e.target.value))}
-                      style={{ backgroundColor: '#2d2d2d', color: '#fff', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
+                      style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
                     />
                   ) : (
                     <input
                       type="text"
                       value={selectedNodes[0].properties[prop.name] || prop.default}
                       onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
-                      style={{ backgroundColor: '#2d2d2d', color: '#fff', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
+                      style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
                     />
                   )}
                 </label>
@@ -792,8 +801,8 @@ const VisualScripting = () => {
             top: 0, 
             width: '200px', 
             height: canvasSize.height - 30, 
-            backgroundColor: '#1e1e1e', 
-            borderLeft: '1px solid #555' 
+            backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0', 
+            borderLeft: isDarkTheme ? '1px solid #555' : '1px solid #999' 
           }}>
             <Minimap
               nodes={nodes}
@@ -803,6 +812,7 @@ const VisualScripting = () => {
               getNodeDimensions={getNodeDimensions}
               nodeTypes={nodeTypes}
               wrapText={wrapText}
+              isDarkTheme={isDarkTheme}
             />
           </div>
         )}
