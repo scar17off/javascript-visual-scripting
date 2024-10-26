@@ -42,6 +42,10 @@ const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible
               {menu === 'Edit' && [
                 <button key="undo" onClick={() => handleMenuItemClick('undo')} style={{width: '100%', textAlign: 'left'}}>Undo</button>,
                 <button key="redo" onClick={() => handleMenuItemClick('redo')} style={{width: '100%', textAlign: 'left'}}>Redo</button>,
+                <button key="copy" onClick={() => handleMenuItemClick('copy')} style={{width: '100%', textAlign: 'left'}}>Copy</button>,
+                <button key="paste" onClick={() => handleMenuItemClick('paste')} style={{width: '100%', textAlign: 'left'}}>Paste</button>,
+                <button key="cut" onClick={() => handleMenuItemClick('cut')} style={{width: '100%', textAlign: 'left'}}>Cut</button>,
+                <button key="selectAll" onClick={() => handleMenuItemClick('selectAll')} style={{width: '100%', textAlign: 'left'}}>Select All</button>,
                 <button key="delete" onClick={() => handleMenuItemClick('delete')} style={{width: '100%', textAlign: 'left'}}>Delete</button>
               ]}
               {menu === 'View' && [

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import MenuBar from './components/MenuBar';
 import ContextMenu from './components/ContextMenu';
-import Minimap from './components/Minimap';  // Add this import
+import Minimap from './components/Minimap';
 import Camera from './Camera';
 import CodeGenerator from './CodeGenerator';
 import { nodeTypes, nodeGroups } from './nodeDefinitions';
@@ -10,6 +10,7 @@ import examples from './examples';
 const GRID_SIZE = 20;
 
 const VisualScripting = () => {
+  // #region State Declarations
   const canvasRef = useRef(null);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
   const [nodes, setNodes] = useState([]);
@@ -27,7 +28,12 @@ const VisualScripting = () => {
   const [redoStack, setRedoStack] = useState([]);
   const [isGridVisible, setIsGridVisible] = useState(true);
   const [isMinimapVisible, setIsMinimapVisible] = useState(true);
+  const [copiedNodes, setCopiedNodes] = useState([]);
+  const [selectedNodes, setSelectedNodes] = useState([]);
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  // #endregion
 
+  // #region Drawing Functions
   const drawGrid = useCallback((ctx, canvasWidth, canvasHeight) => {
     if (!isGridVisible) return;
 
@@ -183,7 +189,7 @@ const VisualScripting = () => {
       ctx.fillRect(node.x, node.y, width, height);
 
       // Node outline (highlight if selected)
-      ctx.strokeStyle = node === selectedNode ? '#FFFF00' : '#000000';
+      ctx.strokeStyle = selectedNodes.includes(node) ? '#FFFF00' : '#000000';
       ctx.lineWidth = 2;
       ctx.strokeRect(node.x, node.y, width, height);
 
@@ -267,12 +273,10 @@ const VisualScripting = () => {
     }
 
     ctx.restore();
-  }, [nodes, edges, connecting, mousePosition, drawGrid, camera, selectedNode, getNodeDimensions]);
+  }, [nodes, edges, connecting, mousePosition, drawGrid, camera, selectedNodes, getNodeDimensions]);
+  // #endregion
 
-  useEffect(() => {
-    drawCanvas();
-  }, [drawCanvas]);
-
+  // #region Event Handlers
   const handleContextMenu = (e) => {
     e.preventDefault();
     const rect = canvasRef.current.getBoundingClientRect();
@@ -300,87 +304,20 @@ const VisualScripting = () => {
       setConnecting(null);
     } else {
       const clickedNode = findClickedNode(x, y);
-      setSelectedNode(clickedNode || null);
-    }
-  };
-
-  const findClickedNode = (x, y) => {
-    return nodes.find(node => {
-      const nodeType = nodeTypes[node.type];
-      const width = 200;
-      const height = getNodeHeight(nodeType);
-      
-      return x >= node.x && x <= node.x + width && y >= node.y && y <= node.y + height;
-    });
-  };
-
-  const findClickedPort = (x, y) => {
-    const PORT_RADIUS = 5;
-    const PORT_RADIUS_SQUARED = PORT_RADIUS * PORT_RADIUS;
-
-    for (const node of nodes) {
-      const nodeType = nodeTypes[node.type];
-      const { width, portStartY } = getNodeDimensions(node, canvasRef.current.getContext('2d'));
-
-      // Check input ports
-      for (let i = 0; i < nodeType.inputs.length; i++) {
-        const portX = node.x;
-        const portY = node.y + portStartY + i * 20;
-        const dx = x - portX;
-        const dy = y - portY;
-        if (dx * dx + dy * dy <= PORT_RADIUS_SQUARED) {
-          return { nodeId: node.id, isInput: true, index: i };
+      if (clickedNode) {
+        if (isMultiSelectMode) {
+          setSelectedNodes(prevSelected => 
+            prevSelected.includes(clickedNode) 
+              ? prevSelected.filter(node => node !== clickedNode)
+              : [...prevSelected, clickedNode]
+          );
+        } else {
+          setSelectedNodes([clickedNode]);
         }
-      }
-
-      // Check output ports
-      for (let i = 0; i < nodeType.outputs.length; i++) {
-        const portX = node.x + width;
-        const portY = node.y + portStartY + i * 20;
-        const dx = x - portX;
-        const dy = y - portY;
-        if (dx * dx + dy * dy <= PORT_RADIUS_SQUARED) {
-          return { nodeId: node.id, isInput: false, index: i };
-        }
+      } else {
+        setSelectedNodes([]);
       }
     }
-    return null;
-  };
-
-  const addNode = (type) => {
-    const nodeType = nodeTypes[type];
-    const newNode = { 
-      id: Date.now(), 
-      type, 
-      x: contextMenu.x,
-      y: contextMenu.y,
-      properties: {} 
-    };
-    
-    // Initialize properties with default values
-    if (nodeType.properties) {
-      nodeType.properties.forEach(prop => {
-        newNode.properties[prop.name] = prop.default;
-      });
-    }
-
-    const newNodes = [...nodes, newNode];
-    setUndoStack([...undoStack, { nodes, edges }]);
-    setRedoStack([]);
-    setNodes(newNodes);
-    setContextMenu({ ...contextMenu, visible: false });
-  };
-
-  const updateNodeProperty = (property, value) => {
-    const updatedNodes = nodes.map(node => 
-      node.id === selectedNode.id 
-        ? { ...node, properties: { ...node.properties, [property]: value } }
-        : node
-    );
-    setUndoStack([...undoStack, { nodes, edges }]);
-    setRedoStack([]);
-    setNodes(updatedNodes);
-    setSelectedNode({ ...selectedNode, properties: { ...selectedNode.properties, [property]: value } });
   };
 
   const handleMouseDown = (e) => {
@@ -469,48 +406,116 @@ const VisualScripting = () => {
     drawCanvas();
   }, [camera, drawCanvas]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    canvas.addEventListener('wheel', handleWheel, { passive: false });
-    return () => {
-      canvas.removeEventListener('wheel', handleWheel);
-    };
-  }, [handleWheel]);
+  const handleKeyDown = (e) => {
+    if (e.key === 'Delete' && selectedNodes.length > 0) {
+      deleteSelectedNodes();
+    } else if (e.key === 'Control') {
+      setIsMultiSelectMode(true);
+    }
+  };
 
-  const deleteSelectedNode = () => {
-    if (selectedNode) {
+  const handleKeyUp = (e) => {
+    if (e.key === 'Control') {
+      setIsMultiSelectMode(false);
+    }
+  };
+  // #endregion
+
+  // #region Node Operations
+  const findClickedNode = (x, y) => {
+    return nodes.find(node => {
+      const nodeType = nodeTypes[node.type];
+      const width = 200;
+      const height = getNodeHeight(nodeType);
+      
+      return x >= node.x && x <= node.x + width && y >= node.y && y <= node.y + height;
+    });
+  };
+
+  const findClickedPort = (x, y) => {
+    const PORT_RADIUS = 5;
+    const PORT_RADIUS_SQUARED = PORT_RADIUS * PORT_RADIUS;
+
+    for (const node of nodes) {
+      const nodeType = nodeTypes[node.type];
+      const { width, portStartY } = getNodeDimensions(node, canvasRef.current.getContext('2d'));
+
+      // Check input ports
+      for (let i = 0; i < nodeType.inputs.length; i++) {
+        const portX = node.x;
+        const portY = node.y + portStartY + i * 20;
+        const dx = x - portX;
+        const dy = y - portY;
+        if (dx * dx + dy * dy <= PORT_RADIUS_SQUARED) {
+          return { nodeId: node.id, isInput: true, index: i };
+        }
+      }
+
+      // Check output ports
+      for (let i = 0; i < nodeType.outputs.length; i++) {
+        const portX = node.x + width;
+        const portY = node.y + portStartY + i * 20;
+        const dx = x - portX;
+        const dy = y - portY;
+        if (dx * dx + dy * dy <= PORT_RADIUS_SQUARED) {
+          return { nodeId: node.id, isInput: false, index: i };
+        }
+      }
+    }
+    return null;
+  };
+
+  const addNode = (type) => {
+    const nodeType = nodeTypes[type];
+    const newNode = { 
+      id: Date.now(), 
+      type, 
+      x: contextMenu.x,
+      y: contextMenu.y,
+      properties: {} 
+    };
+    
+    // Initialize properties with default values
+    if (nodeType.properties) {
+      nodeType.properties.forEach(prop => {
+        newNode.properties[prop.name] = prop.default;
+      });
+    }
+
+    const newNodes = [...nodes, newNode];
+    setUndoStack([...undoStack, { nodes, edges }]);
+    setRedoStack([]);
+    setNodes(newNodes);
+    setContextMenu({ ...contextMenu, visible: false });
+  };
+
+  const updateNodeProperty = (property, value) => {
+    const updatedNodes = nodes.map(node => 
+      node.id === selectedNode.id 
+        ? { ...node, properties: { ...node.properties, [property]: value } }
+        : node
+    );
+    setUndoStack([...undoStack, { nodes, edges }]);
+    setRedoStack([]);
+    setNodes(updatedNodes);
+    setSelectedNode({ ...selectedNode, properties: { ...selectedNode.properties, [property]: value } });
+  };
+
+  const deleteSelectedNodes = () => {
+    if (selectedNodes.length > 0) {
       setUndoStack([...undoStack, { nodes, edges }]);
       setRedoStack([]);
-      setNodes(nodes.filter(node => node.id !== selectedNode.id));
+      const selectedNodeIds = selectedNodes.map(node => node.id);
+      setNodes(nodes.filter(node => !selectedNodeIds.includes(node.id)));
       setEdges(edges.filter(edge => 
-        edge.start.nodeId !== selectedNode.id && edge.end.nodeId !== selectedNode.id
+        !selectedNodeIds.includes(edge.start.nodeId) && !selectedNodeIds.includes(edge.end.nodeId)
       ));
-      setSelectedNode(null);
+      setSelectedNodes([]);
     }
   };
+  // #endregion
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Delete' && selectedNode) {
-      deleteSelectedNode();
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [selectedNode]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setCanvasSize({ width: window.innerWidth, height: window.innerHeight });
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
+  // #region Menu Operations
   const handleMenuClick = (menu) => {
     setMenuOpen(menuOpen === menu ? null : menu);
   };
@@ -583,7 +588,7 @@ const VisualScripting = () => {
         }
         break;
       case 'delete':
-        deleteSelectedNode();
+        deleteSelectedNodes();
         break;
       case 'zoomIn':
         camera.zoom(1.1, canvasSize.width / 2, canvasSize.height / 2);
@@ -614,12 +619,37 @@ const VisualScripting = () => {
       case 'toggleMinimap':
         setIsMinimapVisible(!isMinimapVisible);
         break;
+      case 'copy':
+        setCopiedNodes([...selectedNodes]);
+        break;
+      case 'paste':
+        if (copiedNodes.length > 0) {
+          const newNodes = copiedNodes.map(node => ({
+            ...node,
+            id: Date.now() + Math.random(),
+            x: node.x + 20,
+            y: node.y + 20,
+          }));
+          setNodes([...nodes, ...newNodes]);
+          setUndoStack([...undoStack, { nodes, edges }]);
+          setRedoStack([]);
+        }
+        break;
+      case 'cut':
+        setCopiedNodes([...selectedNodes]);
+        deleteSelectedNodes();
+        break;
+      case 'selectAll':
+        setSelectedNodes([...nodes]);
+        break;
       default:
         console.log(`Unhandled menu action: ${action}`);
     }
     setMenuOpen(null);
   };
+  // #endregion
 
+  // #region Code Generation
   const runScript = (debug = false) => {
     const codeGenerator = new CodeGenerator(nodes, edges);
     codeGenerator.runScript(debug);
@@ -631,7 +661,41 @@ const VisualScripting = () => {
     console.log('Generated Code:');
     console.log(generatedCode);
   };
+  // #endregion
 
+  // #region Effects
+  useEffect(() => {
+    drawCanvas();
+  }, [drawCanvas]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      canvas.removeEventListener('wheel', handleWheel);
+    };
+  }, [handleWheel]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [selectedNodes]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setCanvasSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  // #endregion
+
+  // #region Render
   return (
     <div 
       style={{ 
@@ -645,6 +709,7 @@ const VisualScripting = () => {
       }}
       tabIndex={0} 
       onKeyDown={handleKeyDown}
+      onKeyUp={handleKeyUp}
     >
       <MenuBar
         menuOpen={menuOpen}
@@ -675,7 +740,7 @@ const VisualScripting = () => {
           addNode={addNode}
           camera={camera}
         />
-        {selectedNode && (
+        {selectedNodes.length === 1 && (
           <div style={{
             position: 'absolute',
             top: '10px',
@@ -685,14 +750,14 @@ const VisualScripting = () => {
             padding: '10px',
             color: '#fff',
           }}>
-            <h3>{selectedNode.type} Properties</h3>
-            {nodeTypes[selectedNode.type].properties && nodeTypes[selectedNode.type].properties.map(prop => (
+            <h3>{selectedNodes[0].type} Properties</h3>
+            {nodeTypes[selectedNodes[0].type].properties && nodeTypes[selectedNodes[0].type].properties.map(prop => (
               <div key={prop.name}>
                 <label>
                   {prop.name}:
                   {prop.type === 'select' ? (
                     <select
-                      value={selectedNode.properties[prop.name] || prop.default}
+                      value={selectedNodes[0].properties[prop.name] || prop.default}
                       onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
                       style={{ backgroundColor: '#2d2d2d', color: '#fff', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
                     >
@@ -703,14 +768,14 @@ const VisualScripting = () => {
                   ) : prop.type === 'number' ? (
                     <input
                       type="number"
-                      value={selectedNode.properties[prop.name] || prop.default}
+                      value={selectedNodes[0].properties[prop.name] || prop.default}
                       onChange={(e) => updateNodeProperty(prop.name, parseFloat(e.target.value))}
                       style={{ backgroundColor: '#2d2d2d', color: '#fff', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
                     />
                   ) : (
                     <input
                       type="text"
-                      value={selectedNode.properties[prop.name] || prop.default}
+                      value={selectedNodes[0].properties[prop.name] || prop.default}
                       onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
                       style={{ backgroundColor: '#2d2d2d', color: '#fff', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
                     />
@@ -744,6 +809,7 @@ const VisualScripting = () => {
       </div>
     </div>
   );
+  // #endregion
 };
 
 export default VisualScripting;
