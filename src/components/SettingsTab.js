@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import './CustomCheckbox.css';
 
-const SettingsTab = ({ 
-  isDarkTheme, 
-  toggleTheme, 
-  isGridVisible, 
-  toggleGrid, 
-  isMinimapVisible, 
+const SettingsTab = ({
+  isDarkTheme,
+  toggleTheme,
+  isGridVisible,
+  toggleGrid,
+  isMinimapVisible,
   toggleMinimap,
   codeGeneratorSettings,
   updateCodeGeneratorSettings,
@@ -51,13 +51,13 @@ const SettingsTab = ({
   );
 
   return (
-    <div style={{ 
-      padding: '20px', 
-      color: isDarkTheme ? '#fff' : '#000', 
+    <div style={{
+      padding: '20px',
+      color: isDarkTheme ? '#fff' : '#000',
       backgroundColor: isDarkTheme ? '#1e1e1e' : '#ffffff'
     }}>
       <h2 style={{ ...headingStyle, fontSize: '24px' }}>Settings</h2>
-      
+
       <div style={sectionStyle}>
         <h3 style={headingStyle}>Theme</h3>
         <CustomCheckbox

@@ -1,33 +1,33 @@
 export const nodeTypes = {
-  OnStart: { 
-    color: '#4CAF50', 
-    inputs: [], 
-    outputs: [{ type: 'control', name: 'Next' }], 
-    description: 'Triggered when the script starts' 
+  OnStart: {
+    color: '#4CAF50',
+    inputs: [],
+    outputs: [{ type: 'control', name: 'Next' }],
+    description: 'Triggered when the script starts'
   },
-  Log: { 
-    color: '#FF5722', 
+  Log: {
+    color: '#FF5722',
     inputs: [
       { type: 'control', name: 'In' },
       { type: 'data', name: 'Message' }
-    ], 
-    outputs: [{ type: 'control', name: 'Out' }], 
+    ],
+    outputs: [{ type: 'control', name: 'Out' }],
     description: 'Logs a message to the console',
     properties: [
       { name: 'message', type: 'string', default: '' },
       { name: 'logType', type: 'select', options: ['log', 'error', 'warn', 'info'], default: 'log' }
     ]
   },
-  Variable: { 
-    color: '#795548', 
+  Variable: {
+    color: '#795548',
     inputs: [
       { type: 'control', name: 'In' },
       { type: 'data', name: 'Set' }
-    ], 
+    ],
     outputs: [
       { type: 'control', name: 'Out' },
       { type: 'data', name: 'Get' }
-    ], 
+    ],
     description: 'Stores and retrieves a value',
     properties: [
       { name: 'name', type: 'string', default: 'myVariable' },
@@ -35,75 +35,75 @@ export const nodeTypes = {
       { name: 'initialValue', type: 'string', default: '' }
     ]
   },
-  Function: { 
-    color: '#607D8B', 
+  Function: {
+    color: '#607D8B',
     inputs: [
       { type: 'control', name: 'In' },
       { type: 'data', name: 'Params' }
-    ], 
+    ],
     outputs: [
       { type: 'control', name: 'Out' },
       { type: 'data', name: 'Return' }
-    ], 
+    ],
     description: 'Defines a reusable function',
     properties: [
       { name: 'name', type: 'string', default: 'myFunction' },
       { name: 'parameters', type: 'string', default: '' }
     ]
   },
-  MathOperation: { 
-    color: '#9C27B0', 
+  MathOperation: {
+    color: '#9C27B0',
     inputs: [
       { type: 'control', name: 'In' },
       { type: 'data', name: 'A' },
       { type: 'data', name: 'B' }
-    ], 
+    ],
     outputs: [
       { type: 'control', name: 'Out' },
       { type: 'data', name: 'Result' }
-    ], 
+    ],
     description: 'Performs a mathematical operation',
     properties: [
       { name: 'operation', type: 'select', options: ['+', '-', '*', '/', '%', '**'], default: '+' }
     ]
   },
-  Condition: { 
-    color: '#00BCD4', 
+  Condition: {
+    color: '#00BCD4',
     inputs: [
       { type: 'control', name: 'In' },
       { type: 'data', name: 'Condition' }
-    ], 
+    ],
     outputs: [
       { type: 'control', name: 'True' },
       { type: 'control', name: 'False' }
-    ], 
+    ],
     description: 'Branches based on a condition',
     properties: [
       { name: 'condition', type: 'string', default: '' }
     ]
   },
-  WhileLoop: { 
-    color: '#2196F3', 
+  WhileLoop: {
+    color: '#2196F3',
     inputs: [
       { type: 'control', name: 'In' },
       { type: 'data', name: 'Condition' }
-    ], 
+    ],
     outputs: [
       { type: 'control', name: 'Loop' },
       { type: 'control', name: 'Out' }
-    ], 
+    ],
     description: 'Repeats a set of instructions while a condition is true',
     properties: [
       { name: 'condition', type: 'string', default: 'true' }
     ]
   },
-  ForLoop: { 
-    color: '#2196F3', 
-    inputs: [{ type: 'control', name: 'In' }], 
+  ForLoop: {
+    color: '#2196F3',
+    inputs: [{ type: 'control', name: 'In' }],
     outputs: [
       { type: 'control', name: 'Loop' },
       { type: 'control', name: 'Out' }
-    ], 
+    ],
     description: 'Repeats a set of instructions for a specified number of times',
     properties: [
       { name: 'start', type: 'number', default: 0 },

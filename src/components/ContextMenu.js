@@ -51,9 +51,9 @@ const ContextMenu = ({ visible, x, y, nodeTypes, addNode, camera }) => {
   };
 
   const renderNodeButton = (type) => (
-    <button 
-      key={type} 
-      onClick={() => addNode(type)} 
+    <button
+      key={type}
+      onClick={() => addNode(type)}
       className={styles.nodeButton}
     >
       <i className={`fas ${getIconForNodeType(type)} ${styles.icon}`}></i>
@@ -73,7 +73,7 @@ const ContextMenu = ({ visible, x, y, nodeTypes, addNode, camera }) => {
       <div className={styles.mainMenu}>
         {Object.entries(nodeGroups).map(([group, types]) => (
           <div key={group}>
-            <button 
+            <button
               onClick={() => handleGroupClick(group)}
               className={styles.groupButton}
             >

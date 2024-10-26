@@ -4,13 +4,12 @@ import ContextMenu from './components/ContextMenu';
 import Minimap from './components/Minimap';
 import Tabs from './components/Tabs';
 import SettingsTab from './components/SettingsTab';
-import Camera from './Camera';
+import Camera from './engine/Camera';
+import Renderer from './engine/Renderer';
 import CodeGenerator from './CodeGenerator';
 import { nodeTypes, nodeGroups } from './nodeDefinitions';
 import examples from './examples';
 import { saveAs } from 'file-saver';
-
-const GRID_SIZE = 20;
 
 const VisualScripting = () => {
   // #region State Declarations
@@ -45,96 +44,10 @@ const VisualScripting = () => {
   });
   const [isNodeRoundingEnabled, setIsNodeRoundingEnabled] = useState(true);
   const [needsRedraw, setNeedsRedraw] = useState(true);
+  const [renderer] = useState(() => new Renderer(camera, isDarkTheme, isGridVisible, isNodeRoundingEnabled));
   // #endregion
 
   // #region Drawing Functions
-  const drawGrid = useCallback((ctx, canvasWidth, canvasHeight) => {
-    if (!isGridVisible) return;
-
-    const { x: offsetX, y: offsetY, scale } = camera;
-    const gridSize = GRID_SIZE * scale;
-
-    ctx.strokeStyle = '#2a2a2a';
-    ctx.lineWidth = 1;
-
-    const visibleLeft = -offsetX / scale;
-    const visibleTop = -offsetY / scale;
-    const visibleRight = (canvasWidth - offsetX) / scale;
-    const visibleBottom = (canvasHeight - offsetY) / scale;
-
-    const startX = Math.floor(visibleLeft / gridSize) * gridSize;
-    const startY = Math.floor(visibleTop / gridSize) * gridSize;
-    const endX = Math.ceil(visibleRight / gridSize) * gridSize;
-    const endY = Math.ceil(visibleBottom / gridSize) * gridSize;
-
-    for (let x = startX; x <= endX; x += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(x, visibleTop);
-      ctx.lineTo(x, visibleBottom);
-      ctx.stroke();
-    }
-
-    for (let y = startY; y <= endY; y += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(visibleLeft, y);
-      ctx.lineTo(visibleRight, y);
-      ctx.stroke();
-    }
-  }, [camera, isGridVisible]);
-
-  const getNodeHeight = (nodeType) => {
-    let height = 60 + Math.max(nodeType.inputs.length, nodeType.outputs.length) * 20;
-
-    // Add extra height for properties
-    if (nodeType.properties) {
-      height += nodeType.properties.length * 20; // 20 pixels per property
-    }
-
-    return height;
-  };
-
-  const getNodeDimensions = useCallback((node, ctx) => {
-    const nodeType = nodeTypes[node.type];
-    ctx.font = 'bold 14px Arial';
-    const titleWidth = ctx.measureText(node.type).width;
-    
-    ctx.font = '10px Arial';
-    const descriptionLines = wrapText(ctx, nodeType.description, 180);
-    const descriptionHeight = descriptionLines.length * 12;
-
-    const inputsHeight = nodeType.inputs.length * 20;
-    const outputsHeight = nodeType.outputs.length * 20;
-    const propertiesHeight = (nodeType.properties?.length || 0) * 20;
-
-    const width = Math.max(200, titleWidth + 20, ...descriptionLines.map(line => ctx.measureText(line).width + 20));
-    const height = 35 + descriptionHeight + Math.max(inputsHeight, outputsHeight) + propertiesHeight;
-
-    return { 
-      width, 
-      height,
-      portStartY: 35 + descriptionHeight // This is the y-coordinate where ports start
-    };
-  }, [nodeTypes]);
-
-  const wrapText = (ctx, text, maxWidth) => {
-    const words = text.split(' ');
-    const lines = [];
-    let currentLine = words[0];
-
-    for (let i = 1; i < words.length; i++) {
-      const word = words[i];
-      const width = ctx.measureText(currentLine + " " + word).width;
-      if (width < maxWidth) {
-        currentLine += " " + word;
-      } else {
-        lines.push(currentLine);
-        currentLine = word;
-      }
-    }
-    lines.push(currentLine);
-    return lines;
-  };
-
   const drawCanvas = useCallback(() => {
     if (!needsRedraw) return;
 
@@ -144,173 +57,9 @@ const VisualScripting = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.save();
-    camera.applyToContext(ctx);
-
-    drawGrid(ctx, canvas.width, canvas.height);
-
-    // Draw edges
-    edges.forEach(edge => {
-      const startNode = nodes.find(n => n.id === edge.start.nodeId);
-      const endNode = nodes.find(n => n.id === edge.end.nodeId);
-      if (startNode && endNode) {
-        const startDimensions = getNodeDimensions(startNode, ctx);
-        const endDimensions = getNodeDimensions(endNode, ctx);
-
-        const startPort = edge.start.isInput
-          ? { x: startNode.x, y: startNode.y + startDimensions.portStartY + edge.start.index * 20 }
-          : { x: startNode.x + startDimensions.width, y: startNode.y + startDimensions.portStartY + edge.start.index * 20 };
-        const endPort = edge.end.isInput
-          ? { x: endNode.x, y: endNode.y + endDimensions.portStartY + edge.end.index * 20 }
-          : { x: endNode.x + endDimensions.width, y: endNode.y + endDimensions.portStartY + edge.end.index * 20 };
-
-        // Calculate control points for the Bezier curve
-        const dx = endPort.x - startPort.x;
-        const dy = endPort.y - startPort.y;
-        const controlPoint1 = { x: startPort.x + dx * 0.5, y: startPort.y };
-        const controlPoint2 = { x: endPort.x - dx * 0.5, y: endPort.y };
-
-        // Draw the smooth curve
-        ctx.beginPath();
-        ctx.moveTo(startPort.x, startPort.y);
-        ctx.bezierCurveTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, endPort.x, endPort.y);
-        ctx.strokeStyle = '#666';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Draw arrow for control flow
-        if (nodeTypes[startNode.type].outputs[edge.start.index].type === 'control') {
-          const arrowSize = 10;
-          const angle = Math.atan2(endPort.y - controlPoint2.y, endPort.x - controlPoint2.x);
-          ctx.save();
-          ctx.translate(endPort.x, endPort.y);
-          ctx.rotate(angle);
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(-arrowSize, -arrowSize / 2);
-          ctx.lineTo(-arrowSize, arrowSize / 2);
-          ctx.closePath();
-          ctx.fillStyle = '#666';
-          ctx.fill();
-          ctx.restore();
-        }
-      }
-    });
-
-    // Draw nodes
-    nodes.forEach(node => {
-      const nodeType = nodeTypes[node.type];
-      const { width, height, portStartY } = getNodeDimensions(node, ctx);
-
-      // Node body
-      ctx.fillStyle = nodeType.color;
-      ctx.strokeStyle = selectedNodes.includes(node) ? '#FFFF00' : '#000000';
-      ctx.lineWidth = 2;
-
-      if (isNodeRoundingEnabled) {
-        const radius = 10;
-        ctx.beginPath();
-        ctx.moveTo(node.x + radius, node.y);
-        ctx.lineTo(node.x + width - radius, node.y);
-        ctx.quadraticCurveTo(node.x + width, node.y, node.x + width, node.y + radius);
-        ctx.lineTo(node.x + width, node.y + height - radius);
-        ctx.quadraticCurveTo(node.x + width, node.y + height, node.x + width - radius, node.y + height);
-        ctx.lineTo(node.x + radius, node.y + height);
-        ctx.quadraticCurveTo(node.x, node.y + height, node.x, node.y + height - radius);
-        ctx.lineTo(node.x, node.y + radius);
-        ctx.quadraticCurveTo(node.x, node.y, node.x + radius, node.y);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-      } else {
-        ctx.fillRect(node.x, node.y, width, height);
-        ctx.strokeRect(node.x, node.y, width, height);
-      }
-
-      let currentHeight = 0;
-
-      // Node title
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 14px Arial';
-      currentHeight += 20;
-      ctx.fillText(node.type, node.x + 10, node.y + currentHeight);
-
-      // Node description
-      ctx.font = '10px Arial';
-      const descriptionLines = wrapText(ctx, nodeType.description, width - 20);
-      descriptionLines.forEach((line, index) => {
-        currentHeight += 12;
-        ctx.fillText(line, node.x + 10, node.y + currentHeight + 3);
-      });
-
-      currentHeight += 15; // Add some padding after description
-
-      // Input ports
-      nodeType.inputs.forEach((input, i) => {
-        ctx.fillStyle = connecting && connecting.nodeId === node.id && connecting.isInput && connecting.index === i ? '#FFFF00' : '#FFA500';
-        ctx.beginPath();
-        ctx.arc(node.x, node.y + currentHeight + i * 20, 5, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.fillStyle = 'white';
-        ctx.fillText(`${input.type === 'control' ? '▶' : '●'} ${input.name}`, node.x + 10, node.y + currentHeight + 5 + i * 20);
-      });
-
-      // Output ports
-      nodeType.outputs.forEach((output, i) => {
-        ctx.fillStyle = connecting && connecting.nodeId === node.id && !connecting.isInput && connecting.index === i ? '#FFFF00' : '#FFA500';
-        ctx.beginPath();
-        ctx.arc(node.x + width, node.y + currentHeight + i * 20, 5, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.fillStyle = 'white';
-        ctx.fillText(`${output.name} ${output.type === 'control' ? '▶' : '●'}`, node.x + width - 70, node.y + currentHeight + 5 + i * 20);
-      });
-
-      currentHeight += Math.max(nodeType.inputs.length, nodeType.outputs.length) * 15;
-
-      // Node properties
-      if (nodeType.properties) {
-        ctx.fillStyle = 'white';
-        ctx.font = '12px Arial';
-        
-        nodeType.properties.forEach((prop, index) => {
-          let displayValue = node.properties[prop.name] !== undefined ? node.properties[prop.name] : prop.default;
-          const text = `${prop.name}: ${displayValue}`;
-          currentHeight += 20;
-          ctx.fillText(text, node.x + 10, node.y + currentHeight);
-        });
-      }
-    });
-
-    // Draw connection line
-    if (connecting) {
-      const startNode = nodes.find(n => n.id === connecting.nodeId);
-      if (startNode) {
-        const { width, portStartY } = getNodeDimensions(startNode, ctx);
-        const startX = connecting.isInput ? startNode.x : startNode.x + width;
-        const startY = startNode.y + portStartY + connecting.index * 20;
-        const endX = mousePosition.x;
-        const endY = mousePosition.y;
-
-        // Calculate control points for the Bezier curve
-        const dx = endX - startX;
-        const dy = endY - startY;
-        const controlPoint1 = { x: startX + dx * 0.5, y: startY };
-        const controlPoint2 = { x: endX - dx * 0.5, y: endY };
-
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.bezierCurveTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, endX, endY);
-        ctx.strokeStyle = '#FFFF00';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-    }
-
-    ctx.restore();
+    renderer.drawCanvas(ctx, nodes, edges, connecting, mousePosition, selectedNodes);
     setNeedsRedraw(false);
-  }, [nodes, edges, connecting, mousePosition, drawGrid, camera, selectedNodes, getNodeDimensions, isNodeRoundingEnabled, needsRedraw]);
+  }, [nodes, edges, connecting, mousePosition, selectedNodes, needsRedraw, renderer]);
   // #endregion
 
   // #region Event Handlers
@@ -333,7 +82,7 @@ const VisualScripting = () => {
     if (connecting) {
       const clickedPort = findClickedPort(x, y);
       if (clickedPort && clickedPort.nodeId !== connecting.nodeId) {
-        const newEdge = { 
+        const newEdge = {
           start: connecting.isInput ? clickedPort : connecting,
           end: connecting.isInput ? connecting : clickedPort
         };
@@ -344,8 +93,8 @@ const VisualScripting = () => {
       const clickedNode = findClickedNode(x, y);
       if (clickedNode) {
         if (isMultiSelectMode) {
-          setSelectedNodes(prevSelected => 
-            prevSelected.includes(clickedNode) 
+          setSelectedNodes(prevSelected =>
+            prevSelected.includes(clickedNode)
               ? prevSelected.filter(node => node !== clickedNode)
               : [...prevSelected, clickedNode]
           );
@@ -389,13 +138,13 @@ const VisualScripting = () => {
       camera.move(dx, dy);
       setLastMousePosition({ x: e.clientX, y: e.clientY });
     } else if (draggingNode) {
-      setNodes(nodes.map(node => 
-        node.id === draggingNode.id 
-          ? { 
-              ...node, 
-              x: x - draggingNode.offsetX,
-              y: y - draggingNode.offsetY
-            }
+      setNodes(nodes.map(node =>
+        node.id === draggingNode.id
+          ? {
+            ...node,
+            x: x - draggingNode.offsetX,
+            y: y - draggingNode.offsetY
+          }
           : node
       ));
     }
@@ -410,7 +159,7 @@ const VisualScripting = () => {
       const { x, y } = camera.screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
       const clickedPort = findClickedPort(x, y);
       if (clickedPort && clickedPort.nodeId !== connecting.nodeId) {
-        const newEdge = { 
+        const newEdge = {
           start: connecting.isInput ? clickedPort : connecting,
           end: connecting.isInput ? connecting : clickedPort
         };
@@ -418,7 +167,7 @@ const VisualScripting = () => {
       }
       setConnecting(null);
     }
-    
+
     if (isDraggingCanvas) {
       setIsDraggingCanvas(false);
     } else if (draggingNode) {
@@ -432,7 +181,7 @@ const VisualScripting = () => {
         setSelectedNode(clickedNode);
       }
     }
-    
+
     setDraggingNode(null);
   };
 
@@ -466,10 +215,8 @@ const VisualScripting = () => {
   // #region Node Operations
   const findClickedNode = (x, y) => {
     return nodes.find(node => {
-      const nodeType = nodeTypes[node.type];
-      const width = 200;
-      const height = getNodeHeight(nodeType);
-      
+      const { width, height } = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
+
       return x >= node.x && x <= node.x + width && y >= node.y && y <= node.y + height;
     });
   };
@@ -480,7 +227,7 @@ const VisualScripting = () => {
 
     for (const node of nodes) {
       const nodeType = nodeTypes[node.type];
-      const { width, portStartY } = getNodeDimensions(node, canvasRef.current.getContext('2d'));
+      const { width, portStartY } = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
 
       // Check input ports
       for (let i = 0; i < nodeType.inputs.length; i++) {
@@ -509,14 +256,14 @@ const VisualScripting = () => {
 
   const addNode = (type) => {
     const nodeType = nodeTypes[type];
-    const newNode = { 
-      id: Date.now(), 
-      type, 
+    const newNode = {
+      id: Date.now(),
+      type,
       x: contextMenu.x,
       y: contextMenu.y,
-      properties: {} 
+      properties: {}
     };
-    
+
     // Initialize properties with default values
     if (nodeType.properties) {
       nodeType.properties.forEach(prop => {
@@ -533,17 +280,17 @@ const VisualScripting = () => {
   };
 
   const updateNodeProperty = (property, value) => {
-    const updatedNodes = nodes.map(node => 
-      node.id === selectedNodes[0].id 
+    const updatedNodes = nodes.map(node =>
+      node.id === selectedNodes[0].id
         ? { ...node, properties: { ...node.properties, [property]: value } }
         : node
     );
     setUndoStack([...undoStack, { nodes, edges }]);
     setRedoStack([]);
     setNodes(updatedNodes);
-    
+
     // Update the selectedNodes state as well
-    setSelectedNodes(prevSelected => prevSelected.map(node => 
+    setSelectedNodes(prevSelected => prevSelected.map(node =>
       node.id === selectedNodes[0].id
         ? { ...node, properties: { ...node.properties, [property]: value } }
         : node
@@ -557,7 +304,7 @@ const VisualScripting = () => {
       setRedoStack([]);
       const selectedNodeIds = selectedNodes.map(node => node.id);
       setNodes(nodes.filter(node => !selectedNodeIds.includes(node.id)));
-      setEdges(edges.filter(edge => 
+      setEdges(edges.filter(edge =>
         !selectedNodeIds.includes(edge.start.nodeId) && !selectedNodeIds.includes(edge.end.nodeId)
       ));
       setSelectedNodes([]);
@@ -789,6 +536,13 @@ const VisualScripting = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    renderer.setDarkTheme(isDarkTheme);
+    renderer.setGridVisible(isGridVisible);
+    renderer.setNodeRoundingEnabled(isNodeRoundingEnabled);
+    setNeedsRedraw(true);
+  }, [isDarkTheme, isGridVisible, isNodeRoundingEnabled, renderer]);
   // #endregion
 
   const toggleTheme = () => {
@@ -838,7 +592,7 @@ const VisualScripting = () => {
       gridGroup.setAttribute("stroke", isDarkTheme ? "#3a3a3a" : "#d0d0d0");
       gridGroup.setAttribute("stroke-width", "1");
 
-      for (let x = 0; x <= canvasRect.width; x += GRID_SIZE) {
+      for (let x = 0; x <= canvasRect.width; x += renderer.GRID_SIZE) {
         const line = document.createElementNS(svgNS, "line");
         line.setAttribute("x1", x);
         line.setAttribute("y1", 0);
@@ -847,7 +601,7 @@ const VisualScripting = () => {
         gridGroup.appendChild(line);
       }
 
-      for (let y = 0; y <= canvasRect.height; y += GRID_SIZE) {
+      for (let y = 0; y <= canvasRect.height; y += renderer.GRID_SIZE) {
         const line = document.createElementNS(svgNS, "line");
         line.setAttribute("x1", 0);
         line.setAttribute("y1", y);
@@ -865,8 +619,8 @@ const VisualScripting = () => {
       const startNode = nodes.find(n => n.id === edge.start.nodeId);
       const endNode = nodes.find(n => n.id === edge.end.nodeId);
       if (startNode && endNode) {
-        const startDimensions = getNodeDimensions(startNode, canvasRef.current.getContext('2d'));
-        const endDimensions = getNodeDimensions(endNode, canvasRef.current.getContext('2d'));
+        const startDimensions = renderer.getNodeDimensions(startNode, canvasRef.current.getContext('2d'));
+        const endDimensions = renderer.getNodeDimensions(endNode, canvasRef.current.getContext('2d'));
 
         const startPort = edge.start.isInput
           ? { x: startNode.x, y: startNode.y + startDimensions.portStartY + edge.start.index * 20 }
@@ -894,7 +648,7 @@ const VisualScripting = () => {
     const nodeGroup = document.createElementNS(svgNS, "g");
     nodes.forEach(node => {
       const nodeType = nodeTypes[node.type];
-      const { width, height, portStartY } = getNodeDimensions(node, canvasRef.current.getContext('2d'));
+      const { width, height, portStartY } = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
 
       const nodeRect = document.createElementNS(svgNS, "rect");
       nodeRect.setAttribute("x", node.x);
@@ -969,7 +723,7 @@ const VisualScripting = () => {
     // Convert SVG to string and save
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(svg);
-    const blob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
+    const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
     saveAs(blob, "visual_script.svg");
   };
 
@@ -989,18 +743,18 @@ const VisualScripting = () => {
 
   // #region Render
   return (
-    <div 
-      style={{ 
-        backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0', 
+    <div
+      style={{
+        backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0',
         color: isDarkTheme ? '#fff' : '#000',
-        width: '100vw', 
-        height: '100vh', 
+        width: '100vw',
+        height: '100vh',
         overflow: 'hidden',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column'
       }}
-      tabIndex={0} 
+      tabIndex={0}
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}
     >
@@ -1092,23 +846,23 @@ const VisualScripting = () => {
               </div>
             )}
             {isMinimapVisible && (
-              <div style={{ 
-                position: 'absolute', 
-                right: 0, 
-                top: 0, 
-                width: '200px', 
-                height: canvasSize.height - 30, 
-                backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0', 
-                borderLeft: isDarkTheme ? '1px solid #555' : '1px solid #999' 
+              <div style={{
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                width: '200px',
+                height: canvasSize.height - 30,
+                backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0',
+                borderLeft: isDarkTheme ? '1px solid #555' : '1px solid #999'
               }}>
                 <Minimap
                   nodes={nodes}
                   edges={edges}
                   camera={camera}
                   canvasSize={canvasSize}
-                  getNodeDimensions={getNodeDimensions}
+                  getNodeDimensions={renderer.getNodeDimensions}
                   nodeTypes={nodeTypes}
-                  wrapText={wrapText}
+                  wrapText={renderer.wrapText}
                   isDarkTheme={isDarkTheme}
                 />
               </div>

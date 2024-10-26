@@ -159,9 +159,9 @@ class CodeGenerator {
   }
 
   findNextControlNode(node) {
-    const controlEdge = this.edges.find(edge => 
-      edge.start.nodeId === node.id && 
-      edge.start.isInput === false && 
+    const controlEdge = this.edges.find(edge =>
+      edge.start.nodeId === node.id &&
+      edge.start.isInput === false &&
       edge.start.type === 'control'
     );
     if (controlEdge) {
@@ -194,11 +194,11 @@ class CodeGenerator {
     const { operation } = node.properties;
     const inputA = this.getNodeInputValue(node, 1);
     const inputB = this.getNodeInputValue(node, 2);
-    
+
     if (inputA !== undefined && inputB !== undefined) {
       const result = `(${inputA} ${operation} ${inputB})`;
       this.nodeOutputs.set(node.id, result);
-      
+
       // Find the connected Variable node and update it
       const outputEdge = this.edges.find(edge => edge.start.nodeId === node.id && edge.start.index === 1);
       if (outputEdge) {
@@ -244,11 +244,11 @@ class CodeGenerator {
     }
     this.indentLevel--;
     this.addLine(`});`);
-    
+
     this.addLine(`const responseBody = await response.text();`);
     this.addLine(`const statusCode = response.status;`);
     this.addLine(`const responseHeaders = Object.fromEntries(response.headers.entries());`);
-    
+
     // Store the outputs
     this.nodeOutputs.set(node.id, {
       'Response Body': 'responseBody',
@@ -259,7 +259,7 @@ class CodeGenerator {
     this.addLine(`console.log('Response body:', responseBody);`);
     this.addLine(`console.log('Status code:', statusCode);`);
     this.addLine(`console.log('Response headers:', responseHeaders);`);
-    
+
     this.indentLevel--;
     this.addLine(`} catch (error) {`);
     this.indentLevel++;

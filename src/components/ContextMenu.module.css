@@ -21,7 +21,8 @@
   padding-left: 5px;
 }
 
-.groupButton, .nodeButton {
+.groupButton,
+.nodeButton {
   background: none;
   border: none;
   color: #fff;
@@ -33,7 +34,8 @@
   align-items: center;
 }
 
-.groupButton:hover, .nodeButton:hover {
+.groupButton:hover,
+.nodeButton:hover {
   background-color: #3d3d3d;
 }
 

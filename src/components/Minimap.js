@@ -11,7 +11,7 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
   const drawMinimap = () => {
     const minimap = minimapRef.current;
     const minimapCtx = minimap.getContext('2d');
-    
+
     // Clear the minimap
     minimapCtx.clearRect(0, 0, minimap.width, minimap.height);
 

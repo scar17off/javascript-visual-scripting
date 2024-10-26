@@ -4,11 +4,11 @@ const Tabs = ({ tabs, activeTab, onTabClick, onTabClose, isDarkTheme }) => {
   const getStyles = (isActive) => ({
     tab: {
       padding: '0 30px 0 15px',
-      backgroundColor: isActive 
-        ? (isDarkTheme ? '#252526' : '#ffffff') 
+      backgroundColor: isActive
+        ? (isDarkTheme ? '#252526' : '#ffffff')
         : (isDarkTheme ? '#1e1e1e' : '#f0f0f0'),
-      color: isActive 
-        ? (isDarkTheme ? '#ffffff' : '#000000') 
+      color: isActive
+        ? (isDarkTheme ? '#ffffff' : '#000000')
         : (isDarkTheme ? '#909090' : '#606060'),
       cursor: 'pointer',
       display: 'inline-flex',
@@ -24,8 +24,8 @@ const Tabs = ({ tabs, activeTab, onTabClick, onTabClose, isDarkTheme }) => {
     closeButton: {
       padding: '2px 6px',
       borderRadius: '4px',
-      backgroundColor: isActive 
-        ? (isDarkTheme ? '#3c3c3c' : '#e0e0e0') 
+      backgroundColor: isActive
+        ? (isDarkTheme ? '#3c3c3c' : '#e0e0e0')
         : 'transparent',
       color: isDarkTheme ? '#909090' : '#606060',
       fontSize: '14px',
