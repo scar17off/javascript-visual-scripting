@@ -124,7 +124,6 @@ class Renderer {
 
         // Calculate control points for the Bezier curve
         const dx = endPort.x - startPort.x;
-        const dy = endPort.y - startPort.y;
         const controlPoint1 = { x: startPort.x + dx * 0.5, y: startPort.y };
         const controlPoint2 = { x: endPort.x - dx * 0.5, y: endPort.y };
 
@@ -159,7 +158,7 @@ class Renderer {
   drawNodes(ctx, nodes, selectedNodes) {
     nodes.forEach(node => {
       const nodeType = nodeTypes[node.type];
-      const { width, height, portStartY } = this.getNodeDimensions(node, ctx);
+      const { width, height } = this.getNodeDimensions(node, ctx);
 
       // Node body
       ctx.fillStyle = nodeType.color;
@@ -244,15 +243,14 @@ class Renderer {
   drawConnectionLine(ctx, connecting, mousePosition, nodes) {
     const startNode = nodes.find(n => n.id === connecting.nodeId);
     if (startNode) {
-      const { width, portStartY } = this.getNodeDimensions(startNode, ctx);
+      const { width } = this.getNodeDimensions(startNode, ctx);
       const startX = connecting.isInput ? startNode.x : startNode.x + width;
-      const startY = startNode.y + portStartY + connecting.index * 20;
+      const startY = startNode.y + this.getNodeDimensions(startNode, ctx).portStartY + connecting.index * 20;
       const endX = mousePosition.x;
       const endY = mousePosition.y;
 
       // Calculate control points for the Bezier curve
       const dx = endX - startX;
-      const dy = endY - startY;
       const controlPoint1 = { x: startX + dx * 0.5, y: startY };
       const controlPoint2 = { x: endX - dx * 0.5, y: endY };
 

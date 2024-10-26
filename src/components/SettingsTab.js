@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './CustomCheckbox.css';
 
 const SettingsTab = ({
@@ -13,8 +13,6 @@ const SettingsTab = ({
   isNodeRoundingEnabled,
   toggleNodeRounding
 }) => {
-  const [gridSize, setGridSize] = useState(20);
-
   const sectionStyle = {
     backgroundColor: isDarkTheme ? '#2d2d2d' : '#f0f0f0',
     padding: '20px',
@@ -26,16 +24,6 @@ const SettingsTab = ({
     color: isDarkTheme ? '#ffffff' : '#000000',
     paddingBottom: '10px',
     marginBottom: '20px',
-  };
-
-  const inputStyle = {
-    backgroundColor: isDarkTheme ? '#3d3d3d' : '#ffffff',
-    color: isDarkTheme ? '#ffffff' : '#000000',
-    border: isDarkTheme ? '1px solid #555555' : '1px solid #cccccc',
-    borderRadius: '4px',
-    padding: '5px 10px',
-    fontSize: '14px',
-    width: '60px',
   };
 
   const CustomCheckbox = ({ checked, onChange, label }) => (

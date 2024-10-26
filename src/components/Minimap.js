@@ -1,14 +1,9 @@
-import React, { useRef, useEffect } from 'react';
-import { nodeTypes } from '../nodeDefinitions';
+import React, { useRef, useEffect, useCallback } from 'react';
 
 const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeTypes, wrapText }) => {
   const minimapRef = useRef(null);
 
-  useEffect(() => {
-    drawMinimap();
-  }, [nodes, edges, camera, canvasSize]);
-
-  const drawMinimap = () => {
+  const drawMinimap = useCallback(() => {
     const minimap = minimapRef.current;
     const minimapCtx = minimap.getContext('2d');
 
@@ -133,7 +128,11 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
       viewportWidth * scale,
       viewportHeight * scale
     );
-  };
+  }, [nodes, edges, camera, canvasSize, getNodeDimensions, nodeTypes]);
+
+  useEffect(() => {
+    drawMinimap();
+  }, [drawMinimap]);
 
   return (
     <canvas
