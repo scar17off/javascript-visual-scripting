@@ -135,10 +135,10 @@ const VisualScripting = () => {
 
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return; // Add this check
+    if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return; // Add this check as well
+    if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -510,14 +510,20 @@ const VisualScripting = () => {
 
   const updateNodeProperty = (property, value) => {
     const updatedNodes = nodes.map(node => 
-      node.id === selectedNode.id 
+      node.id === selectedNodes[0].id 
         ? { ...node, properties: { ...node.properties, [property]: value } }
         : node
     );
     setUndoStack([...undoStack, { nodes, edges }]);
     setRedoStack([]);
     setNodes(updatedNodes);
-    setSelectedNode({ ...selectedNode, properties: { ...selectedNode.properties, [property]: value } });
+    
+    // Update the selectedNodes state as well
+    setSelectedNodes(prevSelected => prevSelected.map(node => 
+      node.id === selectedNodes[0].id
+        ? { ...node, properties: { ...node.properties, [property]: value } }
+        : node
+    ));
   };
 
   const deleteSelectedNodes = () => {
@@ -756,7 +762,6 @@ const VisualScripting = () => {
   }, []);
   // #endregion
 
-  // Add this function near the other state-changing functions
   const toggleTheme = () => {
     setIsDarkTheme(prevTheme => !prevTheme);
   };
@@ -764,7 +769,6 @@ const VisualScripting = () => {
   const toggleGrid = () => setIsGridVisible(!isGridVisible);
   const toggleMinimap = () => setIsMinimapVisible(!isMinimapVisible);
 
-  // Add this function near the other state-changing functions
   const updateCodeGeneratorSettings = (setting, value) => {
     setCodeGeneratorSettings(prevSettings => ({
       ...prevSettings,
@@ -1036,7 +1040,7 @@ const VisualScripting = () => {
                         <input
                           type="number"
                           value={selectedNodes[0].properties[prop.name] || prop.default}
-                          onChange={(e) => updateNodeProperty(prop.name, parseFloat(e.target.value))}
+                          onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
                           style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
                         />
                       ) : (
