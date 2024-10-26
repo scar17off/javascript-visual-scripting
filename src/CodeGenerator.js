@@ -593,7 +593,10 @@ class CodeGenerator {
       /^catch/,
       /^finally/,
       /\{$/,
-      /\}$/
+      /\}$/,
+      // Also don't add semicolons after comments
+      /^\/\//,
+      /^\/\*/
     ];
     return !noSemicolonPatterns.some(pattern => pattern.test(line.trim()));
   }
