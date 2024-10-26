@@ -15,6 +15,9 @@ This project is a web-based visual scripting environment that allows users to cr
 - Undo/Redo functionality
 - Zoom and pan canvas controls
 - Save and load projects
+- Export projects as JSON or JavaScript
+- Dark and light theme options
+- Customizable grid and minimap
 - Example projects included
 
 ## Installation
@@ -49,13 +52,15 @@ This project is a web-based visual scripting environment that allows users to cr
 4. Use the property panel on the right to adjust node properties.
 5. Run your script using the "Run" menu options.
 6. Generate code using the "Generate code" option in the "Run" menu.
+7. Export your project as JSON or JavaScript using the "Export" menu.
 
 ## Project Structure
 
 - `src/App.js`: Main application component
 - `src/VisualScripting.js`: Core visual scripting component
 - `src/CodeGenerator.js`: Handles code generation from nodes
-- `src/Camera.js`: Manages canvas zoom and pan
+- `src/engine/Camera.js`: Manages canvas zoom and pan
+- `src/engine/Renderer.js`: Handles rendering of nodes and connections
 - `src/nodeDefinitions.js`: Defines available node types
 - `src/components/`: Contains React components for UI elements
 - `src/examples.js`: Predefined example projects
