@@ -44,6 +44,7 @@ const VisualScripting = () => {
     generateComments: true,
   });
   const [isNodeRoundingEnabled, setIsNodeRoundingEnabled] = useState(true);
+  const [needsRedraw, setNeedsRedraw] = useState(true);
   // #endregion
 
   // #region Drawing Functions
@@ -135,6 +136,8 @@ const VisualScripting = () => {
   };
 
   const drawCanvas = useCallback(() => {
+    if (!needsRedraw) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -306,7 +309,8 @@ const VisualScripting = () => {
     }
 
     ctx.restore();
-  }, [nodes, edges, connecting, mousePosition, drawGrid, camera, selectedNodes, getNodeDimensions, isNodeRoundingEnabled]);
+    setNeedsRedraw(false);
+  }, [nodes, edges, connecting, mousePosition, drawGrid, camera, selectedNodes, getNodeDimensions, isNodeRoundingEnabled, needsRedraw]);
   // #endregion
 
   // #region Event Handlers
@@ -315,6 +319,7 @@ const VisualScripting = () => {
     const rect = canvasRef.current.getBoundingClientRect();
     const { x, y } = camera.screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
     setContextMenu({ visible: true, x, y });
+    setNeedsRedraw(true);
   };
 
   const handleCanvasClick = (e) => {
@@ -351,6 +356,7 @@ const VisualScripting = () => {
         setSelectedNodes([]);
       }
     }
+    setNeedsRedraw(true);
   };
 
   const handleMouseDown = (e) => {
@@ -395,7 +401,7 @@ const VisualScripting = () => {
     }
 
     setMousePosition({ x, y });
-    drawCanvas();
+    setNeedsRedraw(true);
   };
 
   const handleMouseUp = (e) => {
@@ -439,7 +445,7 @@ const VisualScripting = () => {
     const { x, y } = camera.screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
     const factor = e.deltaY > 0 ? 0.9 : 1.1;
     camera.zoom(factor, x, y);
-    drawCanvas();
+    setNeedsRedraw(true);
   }, [camera, drawCanvas]);
 
   const handleKeyDown = (e) => {
@@ -523,6 +529,7 @@ const VisualScripting = () => {
     setRedoStack([]);
     setNodes(newNodes);
     setContextMenu({ ...contextMenu, visible: false });
+    setNeedsRedraw(true);
   };
 
   const updateNodeProperty = (property, value) => {
@@ -541,6 +548,7 @@ const VisualScripting = () => {
         ? { ...node, properties: { ...node.properties, [property]: value } }
         : node
     ));
+    setNeedsRedraw(true);
   };
 
   const deleteSelectedNodes = () => {
@@ -553,6 +561,7 @@ const VisualScripting = () => {
         !selectedNodeIds.includes(edge.start.nodeId) && !selectedNodeIds.includes(edge.end.nodeId)
       ));
       setSelectedNodes([]);
+      setNeedsRedraw(true);
     }
   };
   // #endregion
@@ -749,7 +758,7 @@ const VisualScripting = () => {
     if (activeTab === 'untitled-1') {
       drawCanvas();
     }
-  }, [drawCanvas, activeTab]);
+  }, [drawCanvas, activeTab, needsRedraw]);
 
   useEffect(() => {
     if (activeTab === 'untitled-1') {
