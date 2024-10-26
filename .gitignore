@@ -21,3 +21,44 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# IDE-specific folders
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.VSCodeCounter/
+*.code-workspace
+.history/
+
+# WebStorm
+.idea/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Atom
+.atom/
+
+# Visual Studio
+.vs/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
