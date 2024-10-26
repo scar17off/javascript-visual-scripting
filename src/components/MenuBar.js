@@ -1,6 +1,6 @@
 import React from 'react';
 
-const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible }) => {
+const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible, isMinimapVisible }) => {
   return (
     <div style={{
       backgroundColor: '#333',
@@ -50,6 +50,9 @@ const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible
                 <button key="resetView" onClick={() => handleMenuItemClick('resetView')} style={{width: '100%', textAlign: 'left'}}>Reset View</button>,
                 <button key="toggleGrid" onClick={() => handleMenuItemClick('toggleGrid')} style={{width: '100%', textAlign: 'left'}}>
                   {isGridVisible ? 'Hide Grid' : 'Show Grid'}
+                </button>,
+                <button key="toggleMinimap" onClick={() => handleMenuItemClick('toggleMinimap')} style={{width: '100%', textAlign: 'left'}}>
+                  {isMinimapVisible ? 'Hide Minimap' : 'Show Minimap'}
                 </button>
               ]}
               {menu === 'Run' && [

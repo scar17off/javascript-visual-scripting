@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import MenuBar from './components/MenuBar';
 import ContextMenu from './components/ContextMenu';
+import Minimap from './components/Minimap';  // Add this import
 import Camera from './Camera';
 import CodeGenerator from './CodeGenerator';
 import { nodeTypes, nodeGroups } from './nodeDefinitions';
@@ -25,6 +26,7 @@ const VisualScripting = () => {
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
   const [isGridVisible, setIsGridVisible] = useState(true);
+  const [isMinimapVisible, setIsMinimapVisible] = useState(true);
 
   const drawGrid = useCallback((ctx, canvasWidth, canvasHeight) => {
     if (!isGridVisible) return;
@@ -269,7 +271,7 @@ const VisualScripting = () => {
 
   useEffect(() => {
     drawCanvas();
-  }, [drawCanvas, camera.x, camera.y, camera.scale]);
+  }, [drawCanvas]);
 
   const handleContextMenu = (e) => {
     e.preventDefault();
@@ -609,6 +611,9 @@ const VisualScripting = () => {
       case 'toggleGrid':
         setIsGridVisible(!isGridVisible);
         break;
+      case 'toggleMinimap':
+        setIsMinimapVisible(!isMinimapVisible);
+        break;
       default:
         console.log(`Unhandled menu action: ${action}`);
     }
@@ -646,6 +651,7 @@ const VisualScripting = () => {
         handleMenuClick={handleMenuClick}
         handleMenuItemClick={handleMenuItemClick}
         isGridVisible={isGridVisible}
+        isMinimapVisible={isMinimapVisible}
       />
       <div style={{ flex: 1, position: 'relative' }}>
         <canvas
@@ -712,6 +718,27 @@ const VisualScripting = () => {
                 </label>
               </div>
             ))}
+          </div>
+        )}
+        {isMinimapVisible && (
+          <div style={{ 
+            position: 'absolute', 
+            right: 0, 
+            top: 0, 
+            width: '200px', 
+            height: canvasSize.height - 30, 
+            backgroundColor: '#1e1e1e', 
+            borderLeft: '1px solid #555' 
+          }}>
+            <Minimap
+              nodes={nodes}
+              edges={edges}
+              camera={camera}
+              canvasSize={canvasSize}
+              getNodeDimensions={getNodeDimensions}
+              nodeTypes={nodeTypes}
+              wrapText={wrapText}
+            />
           </div>
         )}
       </div>
