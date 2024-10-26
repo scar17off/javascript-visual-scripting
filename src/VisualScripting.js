@@ -24,8 +24,11 @@ const VisualScripting = () => {
   const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
+  const [isGridVisible, setIsGridVisible] = useState(true);
 
   const drawGrid = useCallback((ctx, canvasWidth, canvasHeight) => {
+    if (!isGridVisible) return;
+
     const { x: offsetX, y: offsetY, scale } = camera;
     const gridSize = GRID_SIZE * scale;
 
@@ -55,7 +58,7 @@ const VisualScripting = () => {
       ctx.lineTo(visibleRight, y);
       ctx.stroke();
     }
-  }, [camera]);
+  }, [camera, isGridVisible]);
 
   const getNodeHeight = (nodeType) => {
     let height = 60 + Math.max(nodeType.inputs.length, nodeType.outputs.length) * 20;
@@ -603,6 +606,9 @@ const VisualScripting = () => {
       case 'generateCode':
         generateCode();
         break;
+      case 'toggleGrid':
+        setIsGridVisible(!isGridVisible);
+        break;
       default:
         console.log(`Unhandled menu action: ${action}`);
     }
@@ -639,6 +645,7 @@ const VisualScripting = () => {
         menuOpen={menuOpen}
         handleMenuClick={handleMenuClick}
         handleMenuItemClick={handleMenuItemClick}
+        isGridVisible={isGridVisible}
       />
       <div style={{ flex: 1, position: 'relative' }}>
         <canvas
