@@ -947,7 +947,7 @@ const VisualScripting = () => {
   };
 
   const exportAsJavaScript = () => {
-    const codeGenerator = new CodeGenerator(nodes, edges);
+    const codeGenerator = new CodeGenerator(nodes, edges, codeGeneratorSettings);
     const generatedCode = codeGenerator.generate();
     const blob = new Blob([generatedCode], { type: 'text/javascript' });
     saveAs(blob, 'generated_script.js');
