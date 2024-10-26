@@ -84,7 +84,11 @@ const VisualScripting = () => {
     const width = Math.max(200, titleWidth + 20, ...descriptionLines.map(line => ctx.measureText(line).width + 20));
     const height = 35 + descriptionHeight + Math.max(inputsHeight, outputsHeight) + propertiesHeight;
 
-    return { width, height };
+    return { 
+      width, 
+      height,
+      portStartY: 35 + descriptionHeight // This is the y-coordinate where ports start
+    };
   }, [nodeTypes]);
 
   const wrapText = (ctx, text, maxWidth) => {
@@ -121,10 +125,15 @@ const VisualScripting = () => {
       const startNode = nodes.find(n => n.id === edge.start.nodeId);
       const endNode = nodes.find(n => n.id === edge.end.nodeId);
       if (startNode && endNode) {
-        const startPort = edge.start.isInput ? { x: startNode.x, y: startNode.y + 50 + edge.start.index * 20 } :
-          { x: startNode.x + 200, y: startNode.y + 50 + edge.start.index * 20 };
-        const endPort = edge.end.isInput ? { x: endNode.x, y: endNode.y + 50 + edge.end.index * 20 } :
-          { x: endNode.x + 200, y: endNode.y + 50 + edge.end.index * 20 };
+        const startDimensions = getNodeDimensions(startNode, ctx);
+        const endDimensions = getNodeDimensions(endNode, ctx);
+
+        const startPort = edge.start.isInput
+          ? { x: startNode.x, y: startNode.y + startDimensions.portStartY + edge.start.index * 20 }
+          : { x: startNode.x + startDimensions.width, y: startNode.y + startDimensions.portStartY + edge.start.index * 20 };
+        const endPort = edge.end.isInput
+          ? { x: endNode.x, y: endNode.y + endDimensions.portStartY + edge.end.index * 20 }
+          : { x: endNode.x + endDimensions.width, y: endNode.y + endDimensions.portStartY + edge.end.index * 20 };
 
         // Calculate control points for the Bezier curve
         const dx = endPort.x - startPort.x;
@@ -162,7 +171,7 @@ const VisualScripting = () => {
     // Draw nodes
     nodes.forEach(node => {
       const nodeType = nodeTypes[node.type];
-      const { width, height } = getNodeDimensions(node, ctx);
+      const { width, height, portStartY } = getNodeDimensions(node, ctx);
 
       // Node body
       ctx.fillStyle = nodeType.color;
@@ -231,8 +240,9 @@ const VisualScripting = () => {
     if (connecting) {
       const startNode = nodes.find(n => n.id === connecting.nodeId);
       if (startNode) {
-        const startX = connecting.isInput ? startNode.x : startNode.x + 200;
-        const startY = startNode.y + 50 + connecting.index * 20;
+        const { width, portStartY } = getNodeDimensions(startNode, ctx);
+        const startX = connecting.isInput ? startNode.x : startNode.x + width;
+        const startY = startNode.y + portStartY + connecting.index * 20;
         const endX = mousePosition.x;
         const endY = mousePosition.y;
 
@@ -300,17 +310,31 @@ const VisualScripting = () => {
   };
 
   const findClickedPort = (x, y) => {
+    const PORT_RADIUS = 5;
+    const PORT_RADIUS_SQUARED = PORT_RADIUS * PORT_RADIUS;
+
     for (const node of nodes) {
       const nodeType = nodeTypes[node.type];
+      const { width, portStartY } = getNodeDimensions(node, canvasRef.current.getContext('2d'));
+
       // Check input ports
       for (let i = 0; i < nodeType.inputs.length; i++) {
-        if (Math.sqrt((x - node.x) ** 2 + (y - (node.y + 50 + i * 20)) ** 2) <= 5) {
+        const portX = node.x;
+        const portY = node.y + portStartY + i * 20;
+        const dx = x - portX;
+        const dy = y - portY;
+        if (dx * dx + dy * dy <= PORT_RADIUS_SQUARED) {
           return { nodeId: node.id, isInput: true, index: i };
         }
       }
+
       // Check output ports
       for (let i = 0; i < nodeType.outputs.length; i++) {
-        if (Math.sqrt((x - (node.x + 200)) ** 2 + (y - (node.y + 50 + i * 20)) ** 2) <= 5) {
+        const portX = node.x + width;
+        const portY = node.y + portStartY + i * 20;
+        const dx = x - portX;
+        const dy = y - portY;
+        if (dx * dx + dy * dy <= PORT_RADIUS_SQUARED) {
           return { nodeId: node.id, isInput: false, index: i };
         }
       }
