@@ -111,54 +111,69 @@ class Renderer {
     edges.forEach(edge => {
       const startNode = nodes.find(n => n.id === edge.start.nodeId);
       const endNode = nodes.find(n => n.id === edge.end.nodeId);
-      if (startNode && endNode) {
-        const startDimensions = this.getNodeDimensions(startNode, ctx);
-        const endDimensions = this.getNodeDimensions(endNode, ctx);
+      
+      if (!startNode || !endNode) return;
 
-        const startPort = edge.start.isInput
-          ? { x: startNode.x, y: startNode.y + startDimensions.portStartY + edge.start.index * 20 }
-          : { x: startNode.x + startDimensions.width, y: startNode.y + startDimensions.portStartY + edge.start.index * 20 };
-        const endPort = edge.end.isInput
-          ? { x: endNode.x, y: endNode.y + endDimensions.portStartY + edge.end.index * 20 }
-          : { x: endNode.x + endDimensions.width, y: endNode.y + endDimensions.portStartY + edge.end.index * 20 };
+      // Quick bounds check for edge endpoints
+      const startDims = this.getNodeDimensions(startNode, ctx);
+      const endDims = this.getNodeDimensions(endNode, ctx);
+      
+      // Skip if both nodes are completely outside view (with padding)
+      const padding = 200; // Larger padding for edges due to curves
+      if (!this.isRectInView(startNode.x, startNode.y, startDims.width, startDims.height, ctx.canvas.width, ctx.canvas.height, padding) &&
+          !this.isRectInView(endNode.x, endNode.y, endDims.width, endDims.height, ctx.canvas.width, ctx.canvas.height, padding)) {
+        return;
+      }
 
-        // Calculate control points for the Bezier curve
-        const dx = endPort.x - startPort.x;
-        const controlPoint1 = { x: startPort.x + dx * 0.5, y: startPort.y };
-        const controlPoint2 = { x: endPort.x - dx * 0.5, y: endPort.y };
+      const startPort = edge.start.isInput
+        ? { x: startNode.x, y: startNode.y + startDims.portStartY + edge.start.index * 20 }
+        : { x: startNode.x + startDims.width, y: startNode.y + startDims.portStartY + edge.start.index * 20 };
+      const endPort = edge.end.isInput
+        ? { x: endNode.x, y: endNode.y + endDims.portStartY + edge.end.index * 20 }
+        : { x: endNode.x + endDims.width, y: endNode.y + endDims.portStartY + edge.end.index * 20 };
 
-        // Draw the smooth curve
+      // Calculate control points for the Bezier curve
+      const dx = endPort.x - startPort.x;
+      const controlPoint1 = { x: startPort.x + dx * 0.5, y: startPort.y };
+      const controlPoint2 = { x: endPort.x - dx * 0.5, y: endPort.y };
+
+      // Draw the smooth curve
+      ctx.beginPath();
+      ctx.moveTo(startPort.x, startPort.y);
+      ctx.bezierCurveTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, endPort.x, endPort.y);
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw arrow for control flow
+      if (nodeTypes[startNode.type].outputs[edge.start.index].type === 'control') {
+        const arrowSize = 10;
+        const angle = Math.atan2(endPort.y - controlPoint2.y, endPort.x - controlPoint2.x);
+        ctx.save();
+        ctx.translate(endPort.x, endPort.y);
+        ctx.rotate(angle);
         ctx.beginPath();
-        ctx.moveTo(startPort.x, startPort.y);
-        ctx.bezierCurveTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, endPort.x, endPort.y);
-        ctx.strokeStyle = '#666';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Draw arrow for control flow
-        if (nodeTypes[startNode.type].outputs[edge.start.index].type === 'control') {
-          const arrowSize = 10;
-          const angle = Math.atan2(endPort.y - controlPoint2.y, endPort.x - controlPoint2.x);
-          ctx.save();
-          ctx.translate(endPort.x, endPort.y);
-          ctx.rotate(angle);
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(-arrowSize, -arrowSize / 2);
-          ctx.lineTo(-arrowSize, arrowSize / 2);
-          ctx.closePath();
-          ctx.fillStyle = '#666';
-          ctx.fill();
-          ctx.restore();
-        }
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-arrowSize, -arrowSize / 2);
+        ctx.lineTo(-arrowSize, arrowSize / 2);
+        ctx.closePath();
+        ctx.fillStyle = '#666';
+        ctx.fill();
+        ctx.restore();
       }
     });
   }
 
   drawNodes(ctx, nodes, selectedNodes) {
     nodes.forEach(node => {
-      const nodeType = nodeTypes[node.type];
       const { width, height } = this.getNodeDimensions(node, ctx);
+      
+      // Skip nodes that are completely outside the view
+      if (!this.isRectInView(node.x, node.y, width, height, ctx.canvas.width, ctx.canvas.height)) {
+        return;
+      }
+
+      const nodeType = nodeTypes[node.type];
 
       // Node body
       ctx.fillStyle = nodeType.color;
@@ -273,6 +288,21 @@ class Renderer {
 
   setNodeRoundingEnabled(isNodeRoundingEnabled) {
     this.isNodeRoundingEnabled = isNodeRoundingEnabled;
+  }
+
+  isRectInView(x, y, width, height, canvasWidth, canvasHeight, padding = 0) {
+    const { scale } = this.camera;
+    const viewBounds = {
+      left: -this.camera.x / scale,
+      top: -this.camera.y / scale,
+      right: (canvasWidth - this.camera.x) / scale,
+      bottom: (canvasHeight - this.camera.y) / scale
+    };
+
+    return !(x + width < viewBounds.left - padding ||
+             x > viewBounds.right + padding ||
+             y + height < viewBounds.top - padding ||
+             y > viewBounds.bottom + padding);
   }
 }
 
