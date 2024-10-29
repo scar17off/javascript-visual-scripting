@@ -1,0 +1,82 @@
+.menuBar {
+  padding: 5px;
+  display: flex;
+  border-bottom: 1px solid #999;
+}
+
+.menuBar.dark {
+  background-color: #333;
+  color: #fff;
+  border-bottom-color: #555;
+}
+
+.menuBar.light {
+  background-color: #e0e0e0;
+  color: #000;
+  border-bottom-color: #999;
+}
+
+.menuItem {
+  position: relative;
+}
+
+.menuButton {
+  background-color: transparent;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.menuButton.dark {
+  color: #fff;
+}
+
+.menuButton.light {
+  color: #000;
+}
+
+.menuButton.active.dark {
+  background-color: #555;
+}
+
+.menuButton.active.light {
+  background-color: #ccc;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  border: 1px solid #999;
+  z-index: 1000;
+  white-space: nowrap;
+}
+
+.dropdownMenu.dark {
+  background-color: #444;
+  border-color: #555;
+}
+
+.dropdownMenu.light {
+  background-color: #f0f0f0;
+  border-color: #999;
+}
+
+.menuItemButton {
+  width: 100%;
+  text-align: left;
+  background-color: transparent;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.menuItemButton.dark {
+  color: #fff;
+}
+
+.menuItemButton.light {
+  color: #000;
+} 
