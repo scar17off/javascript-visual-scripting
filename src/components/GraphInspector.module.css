@@ -148,10 +148,32 @@
 }
 
 .portIcon {
-  width: 12px;
+  position: relative;
+  width: 16px;
   height: 12px;
-  border-radius: 50%;
-  background-color: #FFA500;
+  margin-left: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.portIcon::before {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 2px;
+  background-color: #4CAF50;
+  left: 0;
+}
+
+.portIcon::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 6px solid #4CAF50;
 }
 
 .portType {
