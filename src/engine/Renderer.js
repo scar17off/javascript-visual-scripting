@@ -1,4 +1,5 @@
 import { nodeTypes } from '../nodeDefinitions';
+import { getIconForNodeType } from '../components/ContextMenu';
 
 const FONT_FAMILY = "'Inter', sans-serif";
 
@@ -8,6 +9,7 @@ class Renderer {
     this.isDarkTheme = isDarkTheme;
     this.isGridVisible = isGridVisible;
     this.isNodeRoundingEnabled = isNodeRoundingEnabled;
+    this.renderDescription = false;
     this.GRID_SIZE = 20;
   }
 
@@ -51,8 +53,8 @@ class Renderer {
     const titleWidth = ctx.measureText(node.type).width;
 
     ctx.font = `400 13px ${FONT_FAMILY}`;
-    const descriptionLines = this.wrapText(ctx, nodeType.description, 180);
-    const descriptionHeight = descriptionLines.length * 14;
+    const descriptionLines = this.renderDescription ? this.wrapText(ctx, nodeType.description, 180) : [];
+    const descriptionHeight = this.renderDescription ? descriptionLines.length * 14 : 0;
 
     const inputsHeight = nodeType.inputs.length * 20;
     const outputsHeight = nodeType.outputs.length * 20;
@@ -64,13 +66,13 @@ class Renderer {
       return height + (isVisible ? 20 : 0);
     }, 0) : 0;
 
-    const width = Math.max(200, titleWidth + 20, ...descriptionLines.map(line => ctx.measureText(line).width + 20));
+    const width = Math.max(200, titleWidth + 20, ...(this.renderDescription ? descriptionLines.map(line => ctx.measureText(line).width + 20) : []));
     const height = 35 + descriptionHeight + Math.max(inputsHeight, outputsHeight) + propertiesHeight;
 
     return {
       width,
       height,
-      portStartY: 35 + descriptionHeight // This is the y-coordinate where ports start
+      portStartY: 35 + descriptionHeight
     };
   }
 
@@ -258,21 +260,33 @@ class Renderer {
 
       let currentHeight = 0;
 
-      // Node title
+      // Node title with icon
       ctx.fillStyle = 'white';
       ctx.font = `600 14px ${FONT_FAMILY}`;
       currentHeight += 20;
-      ctx.fillText(node.type, node.x + 10, node.y + currentHeight);
+      
+      // Draw icon using Font Awesome unicode
+      const iconClass = getIconForNodeType(node.type);
+      const iconUnicode = this.getIconUnicode(iconClass);
+      ctx.font = `900 14px "Font Awesome 5 Free"`;
+      ctx.fillText(iconUnicode, node.x + 10, node.y + currentHeight);
+      
+      // Draw title after icon
+      ctx.font = `600 14px ${FONT_FAMILY}`;
+      ctx.fillText(node.type, node.x + 30, node.y + currentHeight);
 
-      // Node description
-      ctx.font = `400 13px ${FONT_FAMILY}`;
-      const descriptionLines = this.wrapText(ctx, nodeType.description, width - 20);
-      descriptionLines.forEach((line, index) => {
-        currentHeight += 14;
-        ctx.fillText(line, node.x + 10, node.y + currentHeight + 3);
-      });
-
-      currentHeight += 15; // Add some padding after description
+      // Node description - only render if renderDescription is true
+      if (this.renderDescription) {
+        ctx.font = `400 13px ${FONT_FAMILY}`;
+        const descriptionLines = this.wrapText(ctx, nodeType.description, width - 20);
+        descriptionLines.forEach((line, index) => {
+          currentHeight += 14;
+          ctx.fillText(line, node.x + 10, node.y + currentHeight + 3);
+        });
+        currentHeight += 15; // Add padding after description
+      } else {
+        currentHeight += 15; // Add minimal padding between title and ports
+      }
 
       // Input ports
       nodeType.inputs.forEach((input, i) => {
@@ -389,6 +403,32 @@ class Renderer {
       x > viewBounds.right + padding ||
       y + height < viewBounds.top - padding ||
       y > viewBounds.bottom + padding);
+  }
+
+  setRenderDescription(renderDescription) {
+    this.renderDescription = renderDescription;
+  }
+
+  // Add this helper method to convert Font Awesome class names to unicode
+  getIconUnicode(iconClass) {
+    const iconMap = {
+      'fa-play': '\uf04b',
+      'fa-terminal': '\uf120',
+      'fa-cube': '\uf1b2',
+      'fa-code': '\uf121',
+      'fa-calculator': '\uf1ec',
+      'fa-code-branch': '\uf126',
+      'fa-sync': '\uf021',
+      'fa-redo': '\uf01e',
+      'fa-list': '\uf03a',
+      'fa-globe': '\uf0ac',
+      'fa-file-code': '\uf1c9',
+      'fa-file-alt': '\uf15c',
+      'fa-lock': '\uf023',
+      'fa-unlock': '\uf09c',
+      'fa-puzzle-piece': '\uf12e'
+    };
+    return iconMap[iconClass] || iconMap['fa-puzzle-piece'];
   }
 }
 
