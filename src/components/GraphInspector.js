@@ -85,7 +85,7 @@ const GraphInspector = ({
         </div>
         {nodeType.inputs.map((input, index) => (
           <div key={index} className={`${styles.portContainer} ${config.isDarkTheme ? styles.portContainerDark : styles.portContainerLight}`}>
-            <div className={styles.portIcon} style={{ transform: 'rotate(180deg)' }} />
+            <div className={input.type === 'control' ? styles.portIconControl : styles.portIconData} />
             <span>"{input.name}"</span>
             <span className={styles.portType}>({input.type})</span>
           </div>
@@ -98,7 +98,7 @@ const GraphInspector = ({
         </div>
         {nodeType.outputs.map((output, index) => (
           <div key={index} className={`${styles.portContainer} ${config.isDarkTheme ? styles.portContainerDark : styles.portContainerLight}`}>
-            <div className={styles.portIcon} />
+            <div className={output.type === 'control' ? styles.portIconControl : styles.portIconData} />
             <span>"{output.name}"</span>
             <span className={styles.portType}>({output.type})</span>
           </div>

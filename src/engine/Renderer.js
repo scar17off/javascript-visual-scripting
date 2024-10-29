@@ -97,7 +97,7 @@ class Renderer {
     this.drawEdges(ctx, edges, nodes);
 
     // Draw nodes
-    this.drawNodes(ctx, nodes, selectedNodes);
+    this.drawNodes(ctx, nodes, edges, selectedNodes);
 
     // Draw connection line
     if (connecting) {
@@ -164,11 +164,59 @@ class Renderer {
     });
   }
 
-  drawNodes(ctx, nodes, selectedNodes) {
+  drawPortIcon(ctx, x, y, isInput) {
+    const offset = 5; // Distance from node border
+    const arrowX = isInput ? x - offset : x + offset;
+    
+    ctx.beginPath();
+    if (isInput) {
+      ctx.moveTo(arrowX - 6, y - 5);
+      ctx.lineTo(arrowX - 6, y + 5);
+      ctx.lineTo(arrowX, y);
+    } else {
+      ctx.moveTo(arrowX, y - 5);
+      ctx.lineTo(arrowX, y + 5);
+      ctx.lineTo(arrowX + 6, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = '#999999';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  drawLabelArrow(ctx, x, y, isControl) {
+    if (isControl) {
+      const lineLength = 10;
+      
+      // Draw line
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + lineLength, y);
+      ctx.strokeStyle = '#4CAF50';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw arrow
+      ctx.beginPath();
+      ctx.moveTo(x + lineLength, y - 5);
+      ctx.lineTo(x + lineLength, y + 5);
+      ctx.lineTo(x + lineLength + 6, y);
+      ctx.closePath();
+      ctx.fillStyle = '#4CAF50';
+      ctx.fill();
+    } else {
+      // Draw orange circle for data ports
+      ctx.beginPath();
+      ctx.arc(x + 5, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFA500';
+      ctx.fill();
+    }
+  }
+
+  drawNodes(ctx, nodes, edges, selectedNodes) {
     nodes.forEach(node => {
       const { width, height } = this.getNodeDimensions(node, ctx);
       
-      // Skip nodes that are completely outside the view
       if (!this.isRectInView(node.x, node.y, width, height, ctx.canvas.width, ctx.canvas.height)) {
         return;
       }
@@ -220,22 +268,44 @@ class Renderer {
 
       // Input ports
       nodeType.inputs.forEach((input, i) => {
-        ctx.fillStyle = '#FFA500';
-        ctx.beginPath();
-        ctx.arc(node.x, node.y + currentHeight + i * 20, 5, 0, 2 * Math.PI);
-        ctx.fill();
+        const portY = node.y + currentHeight + i * 20;
+        const isControl = input.type === 'control';
+        
+        // Check if port is connected
+        const isPortConnected = edges.some(edge => 
+          edge.end.nodeId === node.id && 
+          edge.end.index === i && 
+          edge.end.isInput
+        );
+        
+        if (!isPortConnected) {
+          this.drawPortIcon(ctx, node.x, portY, true);
+        }
+        
+        this.drawLabelArrow(ctx, node.x + 15, portY, isControl);
         ctx.fillStyle = 'white';
-        ctx.fillText(`${input.type === 'control' ? '▶' : '●'} ${input.name}`, node.x + 10, node.y + currentHeight + 5 + i * 20);
+        ctx.fillText(input.name, node.x + 35, portY + 5);
       });
 
       // Output ports
       nodeType.outputs.forEach((output, i) => {
-        ctx.fillStyle = '#FFA500';
-        ctx.beginPath();
-        ctx.arc(node.x + width, node.y + currentHeight + i * 20, 5, 0, 2 * Math.PI);
-        ctx.fill();
+        const portY = node.y + currentHeight + i * 20;
+        const isControl = output.type === 'control';
+        
+        const isPortConnected = edges.some(edge => 
+          edge.start.nodeId === node.id && 
+          edge.start.index === i && 
+          !edge.start.isInput
+        );
+        
+        if (!isPortConnected) {
+          this.drawPortIcon(ctx, node.x + width, portY, false);
+        }
+        
         ctx.fillStyle = 'white';
-        ctx.fillText(`${output.name} ${output.type === 'control' ? '▶' : '●'}`, node.x + width - 70, node.y + currentHeight + 5 + i * 20);
+        const textWidth = ctx.measureText(output.name).width;
+        ctx.fillText(output.name, node.x + width - textWidth - 35, portY + 5);
+        this.drawLabelArrow(ctx, node.x + width - 25, portY, isControl);
       });
 
       currentHeight += Math.max(nodeType.inputs.length, nodeType.outputs.length) * 15;

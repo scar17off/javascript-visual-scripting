@@ -7,9 +7,6 @@
   - [ ] Copy node
   - [ ] Delete node
 
-- [ ] Improve port appearance
-  - [ ] Add arrows to ports instead of circles
-
 - [ ] Node labeling
 
 - [ ] Add new node types:

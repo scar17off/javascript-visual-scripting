@@ -226,8 +226,10 @@ const VisualScripting = () => {
   };
 
   const findClickedPort = (x, y) => {
-    const PORT_RADIUS = 5;
-    const PORT_RADIUS_SQUARED = PORT_RADIUS * PORT_RADIUS;
+    const PORT_WIDTH = 6;  // Width of the gray arrow
+    const PORT_HEIGHT = 10; // Height of the gray arrow 
+    const PORT_OFFSET = 5;  // Distance from node border
+    const SCALE_MULTIPLIER = 1.5; // Scale multiplier for hit detection
 
     for (const node of nodes) {
       const nodeType = nodeTypes[node.type];
@@ -235,22 +237,22 @@ const VisualScripting = () => {
 
       // Check input ports
       for (let i = 0; i < nodeType.inputs.length; i++) {
-        const portX = node.x;
-        const portY = node.y + portStartY + i * 20;
-        const dx = x - portX;
-        const dy = y - portY;
-        if (dx * dx + dy * dy <= PORT_RADIUS_SQUARED) {
+        const portX = node.x - PORT_OFFSET - PORT_WIDTH; // Position of gray arrow
+        const portY = node.y + portStartY + i * 20 - PORT_HEIGHT/2;
+        
+        if (x >= portX && x <= portX + PORT_WIDTH * SCALE_MULTIPLIER &&
+            y >= portY && y <= portY + PORT_HEIGHT * SCALE_MULTIPLIER) {
           return { nodeId: node.id, isInput: true, index: i };
         }
       }
 
       // Check output ports
       for (let i = 0; i < nodeType.outputs.length; i++) {
-        const portX = node.x + width;
-        const portY = node.y + portStartY + i * 20;
-        const dx = x - portX;
-        const dy = y - portY;
-        if (dx * dx + dy * dy <= PORT_RADIUS_SQUARED) {
+        const portX = node.x + width + PORT_OFFSET; // Position of gray arrow
+        const portY = node.y + portStartY + i * 20 - PORT_HEIGHT/2;
+        
+        if (x >= portX && x <= portX + PORT_WIDTH * SCALE_MULTIPLIER &&
+            y >= portY && y <= portY + PORT_HEIGHT * SCALE_MULTIPLIER) {
           return { nodeId: node.id, isInput: false, index: i };
         }
       }

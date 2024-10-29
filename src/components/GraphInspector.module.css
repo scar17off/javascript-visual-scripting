@@ -156,7 +156,15 @@
   align-items: center;
 }
 
-.portIcon::before {
+.portIconControl {
+  position: relative;
+  width: 16px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.portIconControl::before {
   content: '';
   position: absolute;
   width: 10px;
@@ -165,7 +173,7 @@
   left: 0;
 }
 
-.portIcon::after {
+.portIconControl::after {
   content: '';
   position: absolute;
   right: 0;
@@ -174,6 +182,14 @@
   border-top: 5px solid transparent;
   border-bottom: 5px solid transparent;
   border-left: 6px solid #4CAF50;
+}
+
+.portIconData {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #FFA500;
+  margin: 0 4px;
 }
 
 .portType {
@@ -194,4 +210,20 @@
 
 .emptyMessageLight {
   color: #666;
+}
+
+.portIconControlInput {
+  composes: portIconControl;
+}
+
+.portIconControlInput::before {
+  left: auto;
+  right: 0;
+}
+
+.portIconControlInput::after {
+  right: auto;
+  left: 0;
+  border-left: none;
+  border-right: 6px solid #4CAF50;
 } 
