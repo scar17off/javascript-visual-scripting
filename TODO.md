@@ -2,8 +2,18 @@
 
 - [ ] Add Graph inspector panel on the left
   - [ ] Display node icon
-  - [ ] Show all properties in the inspector and allow editing
-  - [ ] Show all inputs and outputs in the inspector with icons (Their name in quotes)
+  - [x] Show all properties in the inspector and allow editing
+  - [x] Show all inputs and outputs in the inspector with icons (Their name in quotes)
+  - [ ] Show output descriptions
+
+- [ ] Add node context menu
+  - [ ] Copy node
+  - [ ] Delete node
+
+- [ ] Improve port appearance
+  - [ ] Add arrows to ports instead of circles
+
+- [ ] Node labeling
 
 - [ ] Add new node types:
   - [ ] Switch

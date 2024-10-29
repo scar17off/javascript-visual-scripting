@@ -10,6 +10,7 @@ import CodeGenerator from './CodeGenerator';
 import { nodeTypes, nodeGroups } from './nodeDefinitions';
 import examples from './examples';
 import { saveAs } from 'file-saver';
+import GraphInspector from './components/GraphInspector';
 
 const VisualScripting = () => {
   // #region State Declarations
@@ -45,6 +46,7 @@ const VisualScripting = () => {
   const [isNodeRoundingEnabled, setIsNodeRoundingEnabled] = useState(true);
   const [needsRedraw, setNeedsRedraw] = useState(true);
   const [renderer] = useState(() => new Renderer(camera, isDarkTheme, isGridVisible, isNodeRoundingEnabled));
+  const [isGraphInspectorVisible, setIsGraphInspectorVisible] = useState(true);
   // #endregion
 
   // #region Drawing Functions
@@ -458,6 +460,9 @@ const VisualScripting = () => {
       case 'toggleNodeRounding':
         toggleNodeRounding();
         break;
+      case 'toggleGraphInspector':
+        setIsGraphInspectorVisible(!isGraphInspectorVisible);
+        break;
       default:
         console.log(`Unhandled menu action: ${action}`);
     }
@@ -775,97 +780,68 @@ const VisualScripting = () => {
         onTabClose={handleTabClose}
         isDarkTheme={isDarkTheme}
       />
-      <div style={{ flex: 1, position: 'relative' }}>
+      <div style={{ flex: 1, position: 'relative', display: 'flex' }}>
         {activeTab === 'untitled-1' ? (
           <>
-            <canvas
-              ref={canvasRef}
-              width={canvasSize.width}
-              height={canvasSize.height - 65} // 30px for MenuBar + 35px for Tabs
-              onContextMenu={handleContextMenu}
-              onClick={handleCanvasClick}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-              style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', display: 'block' }}
-            />
-            <ContextMenu
-              visible={contextMenu.visible}
-              x={contextMenu.x}
-              y={contextMenu.y}
-              nodeTypes={nodeTypes}
-              nodeGroups={nodeGroups}
-              addNode={addNode}
-              camera={camera}
-            />
-            {selectedNodes.length === 1 && (
+            {isGraphInspectorVisible && (
               <div style={{
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                background: isDarkTheme ? '#3d3d3d' : '#d0d0d0',
-                border: isDarkTheme ? '1px solid #555' : '1px solid #999',
-                padding: '10px',
-                color: isDarkTheme ? '#fff' : '#000',
+                width: '300px',
+                height: '100%',
+                flexShrink: 0,
               }}>
-                <h3>{selectedNodes[0].type} Properties</h3>
-                {nodeTypes[selectedNodes[0].type].properties && nodeTypes[selectedNodes[0].type].properties.map(prop => (
-                  <div key={prop.name}>
-                    <label>
-                      {prop.name}:
-                      {prop.type === 'select' ? (
-                        <select
-                          value={selectedNodes[0].properties[prop.name] || prop.default}
-                          onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
-                          style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
-                        >
-                          {prop.options.map(option => (
-                            <option key={option} value={option}>{option}</option>
-                          ))}
-                        </select>
-                      ) : prop.type === 'number' ? (
-                        <input
-                          type="number"
-                          value={selectedNodes[0].properties[prop.name] || prop.default}
-                          onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
-                          style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={selectedNodes[0].properties[prop.name] || prop.default}
-                          onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
-                          style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', color: isDarkTheme ? '#fff' : '#000', border: '1px solid #555', width: '100%', marginBottom: '5px' }}
-                        />
-                      )}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            )}
-            {isMinimapVisible && (
-              <div style={{
-                position: 'absolute',
-                right: 0,
-                top: 0,
-                width: '200px',
-                height: canvasSize.height - 30,
-                backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0',
-                borderLeft: isDarkTheme ? '1px solid #555' : '1px solid #999'
-              }}>
-                <Minimap
-                  nodes={nodes}
-                  edges={edges}
-                  camera={camera}
-                  canvasSize={canvasSize}
-                  getNodeDimensions={(node, ctx) => renderer.getNodeDimensions(node, ctx)}
+                <GraphInspector
+                  selectedNodes={selectedNodes}
                   nodeTypes={nodeTypes}
-                  wrapText={(ctx, text, maxWidth) => renderer.wrapText(ctx, text, maxWidth)}
+                  updateNodeProperty={updateNodeProperty}
                   isDarkTheme={isDarkTheme}
                 />
               </div>
             )}
+            <div style={{ flex: 1, position: 'relative' }}>
+              <canvas
+                ref={canvasRef}
+                width={canvasSize.width}
+                height={canvasSize.height - 65} // 30px for MenuBar + 35px for Tabs
+                onContextMenu={handleContextMenu}
+                onClick={handleCanvasClick}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', display: 'block' }}
+              />
+              <ContextMenu
+                visible={contextMenu.visible}
+                x={contextMenu.x}
+                y={contextMenu.y}
+                nodeTypes={nodeTypes}
+                nodeGroups={nodeGroups}
+                addNode={addNode}
+                camera={camera}
+              />
+              {isMinimapVisible && (
+                <div style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  width: '200px',
+                  height: canvasSize.height - 30,
+                  backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0',
+                  borderLeft: isDarkTheme ? '1px solid #555' : '1px solid #999'
+                }}>
+                  <Minimap
+                    nodes={nodes}
+                    edges={edges}
+                    camera={camera}
+                    canvasSize={canvasSize}
+                    getNodeDimensions={(node, ctx) => renderer.getNodeDimensions(node, ctx)}
+                    nodeTypes={nodeTypes}
+                    wrapText={(ctx, text, maxWidth) => renderer.wrapText(ctx, text, maxWidth)}
+                    isDarkTheme={isDarkTheme}
+                  />
+                </div>
+              )}
+            </div>
           </>
         ) : activeTab === 'settings' ? (
           <SettingsTab

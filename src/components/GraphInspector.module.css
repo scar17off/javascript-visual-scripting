@@ -1,0 +1,161 @@
+.container {
+  height: 100%;
+  overflow: auto;
+}
+
+.containerDark {
+  background-color: #252526;
+  border-right: 1px solid #1e1e1e;
+}
+
+.containerLight {
+  background-color: #f0f0f0;
+  border-right: 1px solid #ccc;
+}
+
+.header {
+  padding: 10px;
+  border-bottom: 1px solid #1e1e1e;
+}
+
+.headerDark {
+  background-color: #333;
+  border-bottom: 1px solid #1e1e1e;
+}
+
+.headerLight {
+  background-color: #e0e0e0;
+  border-bottom: 1px solid #ccc;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nodeIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.nodeTitle {
+  font-weight: bold;
+}
+
+.nodeTitleDark {
+  color: #fff;
+}
+
+.nodeTitleLight {
+  color: #000;
+}
+
+.description {
+  padding: 10px;
+  font-size: 12px;
+}
+
+.descriptionDark {
+  color: #ccc;
+  border-bottom: 1px solid #1e1e1e;
+}
+
+.descriptionLight {
+  color: #666;
+  border-bottom: 1px solid #ccc;
+}
+
+.section {
+  padding: 10px;
+}
+
+.sectionTitle {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.sectionTitleDark {
+  color: #fff;
+}
+
+.sectionTitleLight {
+  color: #000;
+}
+
+.propertyContainer {
+  margin-bottom: 10px;
+}
+
+.propertyLabel {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+
+.propertyLabelDark {
+  color: #ccc;
+}
+
+.propertyLabelLight {
+  color: #666;
+}
+
+.input {
+  width: 100%;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.inputDark {
+  background-color: #3c3c3c;
+  color: #fff;
+  border: 1px solid #555;
+}
+
+.inputLight {
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #ccc;
+}
+
+.portContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.portContainerDark {
+  color: #ccc;
+}
+
+.portContainerLight {
+  color: #666;
+}
+
+.portIcon {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #FFA500;
+}
+
+.portType {
+  opacity: 0.7;
+}
+
+.emptyMessage {
+  padding: 10px;
+  font-style: italic;
+  text-align: center;
+}
+
+.emptyMessageDark {
+  color: #999;
+}
+
+.emptyMessageLight {
+  color: #666;
+} 
