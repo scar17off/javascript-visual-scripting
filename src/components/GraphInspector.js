@@ -2,6 +2,23 @@ import React from 'react';
 import styles from './GraphInspector.module.css';
 import { getIconForNodeType } from './ContextMenu';
 
+const PortItem = ({ port, isDarkTheme }) => (
+  <div className={`${styles.portContainer} ${isDarkTheme ? styles.portContainerDark : styles.portContainerLight}`}>
+    <div className={port.type === 'control' ? styles.portIconControl : styles.portIconData} />
+    <div className={styles.portInfo}>
+      <div className={styles.portNameRow}>
+        <span>"{port.name}"</span>
+        <span className={styles.portType}>({port.type})</span>
+      </div>
+      {port.description && (
+        <div className={`${styles.portDescription} ${isDarkTheme ? styles.portDescriptionDark : styles.portDescriptionLight}`}>
+          {port.description}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
 const GraphInspector = ({
   selectedNodes,
   nodeTypes,
@@ -95,11 +112,7 @@ const GraphInspector = ({
           Input Ports
         </div>
         {nodeType.inputs.map((input, index) => (
-          <div key={index} className={`${styles.portContainer} ${config.isDarkTheme ? styles.portContainerDark : styles.portContainerLight}`}>
-            <div className={input.type === 'control' ? styles.portIconControl : styles.portIconData} />
-            <span>"{input.name}"</span>
-            <span className={styles.portType}>({input.type})</span>
-          </div>
+          <PortItem key={index} port={input} isDarkTheme={config.isDarkTheme} />
         ))}
 
         {/* Output Ports */}
@@ -108,11 +121,7 @@ const GraphInspector = ({
           Output Ports
         </div>
         {nodeType.outputs.map((output, index) => (
-          <div key={index} className={`${styles.portContainer} ${config.isDarkTheme ? styles.portContainerDark : styles.portContainerLight}`}>
-            <div className={output.type === 'control' ? styles.portIconControl : styles.portIconData} />
-            <span>"{output.name}"</span>
-            <span className={styles.portType}>({output.type})</span>
-          </div>
+          <PortItem key={index} port={output} isDarkTheme={config.isDarkTheme} />
         ))}
       </div>
     </div>

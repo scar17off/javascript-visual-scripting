@@ -2,16 +2,32 @@ export const nodeTypes = {
   OnStart: {
     color: '#4CAF50',
     inputs: [],
-    outputs: [{ type: 'control', name: 'Next' }],
+    outputs: [{ 
+      type: 'control', 
+      name: 'Next',
+      description: 'Triggered when the script begins execution'
+    }],
     description: 'Triggered when the script starts'
   },
   Log: {
     color: '#FF5722',
     inputs: [
-      { type: 'control', name: 'In' },
-      { type: 'data', name: 'Message' }
+      { 
+        type: 'control', 
+        name: 'In',
+        description: 'Triggers the log operation'
+      },
+      { 
+        type: 'data', 
+        name: 'Message',
+        description: 'The message to be logged'
+      }
     ],
-    outputs: [{ type: 'control', name: 'Out' }],
+    outputs: [{ 
+      type: 'control', 
+      name: 'Out',
+      description: 'Triggered after the message is logged'
+    }],
     description: 'Logs a message to the console',
     properties: [
       { name: 'message', type: 'string', default: '' },

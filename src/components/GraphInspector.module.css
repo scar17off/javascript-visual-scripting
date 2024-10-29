@@ -226,4 +226,32 @@
   left: 0;
   border-left: none;
   border-right: 6px solid #4CAF50;
+}
+
+.portInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.portNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.portDescription {
+  font-size: 0.85em;
+  color: #666;
+  font-style: italic;
+  margin-left: 4px;
+}
+
+.portDescriptionDark {
+  color: #999;
+}
+
+.portDescriptionLight {
+  color: #666;
 } 
