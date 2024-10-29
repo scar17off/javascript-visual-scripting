@@ -1,5 +1,7 @@
 import { nodeTypes } from '../nodeDefinitions';
 
+const FONT_FAMILY = "'Inter', sans-serif";
+
 class Renderer {
   constructor(camera, isDarkTheme, isGridVisible, isNodeRoundingEnabled) {
     this.camera = camera;
@@ -45,12 +47,12 @@ class Renderer {
 
   getNodeDimensions(node, ctx) {
     const nodeType = nodeTypes[node.type];
-    ctx.font = 'bold 14px Arial';
+    ctx.font = `600 14px ${FONT_FAMILY}`;
     const titleWidth = ctx.measureText(node.type).width;
 
-    ctx.font = '10px Arial';
+    ctx.font = `400 13px ${FONT_FAMILY}`;
     const descriptionLines = this.wrapText(ctx, nodeType.description, 180);
-    const descriptionHeight = descriptionLines.length * 12;
+    const descriptionHeight = descriptionLines.length * 14;
 
     const inputsHeight = nodeType.inputs.length * 20;
     const outputsHeight = nodeType.outputs.length * 20;
@@ -258,15 +260,15 @@ class Renderer {
 
       // Node title
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 14px Arial';
+      ctx.font = `600 14px ${FONT_FAMILY}`;
       currentHeight += 20;
       ctx.fillText(node.type, node.x + 10, node.y + currentHeight);
 
       // Node description
-      ctx.font = '10px Arial';
+      ctx.font = `400 13px ${FONT_FAMILY}`;
       const descriptionLines = this.wrapText(ctx, nodeType.description, width - 20);
       descriptionLines.forEach((line, index) => {
-        currentHeight += 12;
+        currentHeight += 14;
         ctx.fillText(line, node.x + 10, node.y + currentHeight + 3);
       });
 
@@ -319,7 +321,7 @@ class Renderer {
       // Node properties
       if (nodeType.properties) {
         ctx.fillStyle = 'white';
-        ctx.font = '12px Arial';
+        ctx.font = `500 13px ${FONT_FAMILY}`;
 
         nodeType.properties.forEach((prop, index) => {
           // Check if property should be visible
