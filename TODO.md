@@ -1,9 +1,6 @@
 # TODO
 
 - [ ] Add Graph inspector panel on the left
-  - [ ] Display node icon
-  - [x] Show all properties in the inspector and allow editing
-  - [x] Show all inputs and outputs in the inspector with icons (Their name in quotes)
   - [ ] Show output descriptions
 
 - [ ] Add node context menu

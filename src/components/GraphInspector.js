@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './GraphInspector.module.css';
+import { getIconForNodeType } from './ContextMenu';
 
 const GraphInspector = ({ 
   selectedNodes, 
@@ -23,9 +24,9 @@ const GraphInspector = ({
       {/* Header */}
       <div className={`${styles.header} ${config.isDarkTheme ? styles.headerDark : styles.headerLight}`}>
         <div className={styles.headerContent}>
-          <div 
-            className={styles.nodeIcon}
-            style={{ backgroundColor: nodeType.color }}
+          <i 
+            className={`fas ${getIconForNodeType(node.type)} ${styles.nodeIcon}`}
+            style={{ color: nodeType.color }}
           />
           <span className={`${styles.nodeTitle} ${config.isDarkTheme ? styles.nodeTitleDark : styles.nodeTitleLight}`}>
             {node.type}
