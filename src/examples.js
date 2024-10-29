@@ -27,7 +27,6 @@ const examples = {
     ]
   },
   example3: {
-    // If node example
     nodes: [
       { id: 1, type: 'OnStart', x: 100, y: 100, properties: {} },
       { id: 2, type: 'Variable', x: 350, y: 50, properties: { name: 'a', type: 'number', initialValue: '5' } },

@@ -630,7 +630,6 @@ const VisualScripting = () => {
           : { x: endNode.x + endDimensions.width, y: endNode.y + endDimensions.portStartY + edge.end.index * 20 };
 
         const dx = endPort.x - startPort.x;
-        const dy = endPort.y - startPort.y;
         const controlPoint1 = { x: startPort.x + dx * 0.5, y: startPort.y };
         const controlPoint2 = { x: endPort.x - dx * 0.5, y: endPort.y };
 
@@ -860,9 +859,9 @@ const VisualScripting = () => {
                   edges={edges}
                   camera={camera}
                   canvasSize={canvasSize}
-                  getNodeDimensions={renderer.getNodeDimensions}
+                  getNodeDimensions={(node, ctx) => renderer.getNodeDimensions(node, ctx)}
                   nodeTypes={nodeTypes}
-                  wrapText={renderer.wrapText}
+                  wrapText={(ctx, text, maxWidth) => renderer.wrapText(ctx, text, maxWidth)}
                   isDarkTheme={isDarkTheme}
                 />
               </div>
