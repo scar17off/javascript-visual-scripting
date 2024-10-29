@@ -227,7 +227,7 @@ const VisualScripting = () => {
 
   const findClickedPort = (x, y) => {
     const PORT_WIDTH = 6;  // Width of the gray arrow
-    const PORT_HEIGHT = 10; // Height of the gray arrow 
+    const PORT_HEIGHT = 10; // Height of the gray arrow
     const PORT_OFFSET = 5;  // Distance from node border
     const SCALE_MULTIPLIER = 1.5; // Scale multiplier for hit detection
 

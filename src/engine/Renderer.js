@@ -54,7 +54,13 @@ class Renderer {
 
     const inputsHeight = nodeType.inputs.length * 20;
     const outputsHeight = nodeType.outputs.length * 20;
-    const propertiesHeight = (nodeType.properties?.length || 0) * 20;
+    const propertiesHeight = nodeType.properties ? nodeType.properties.reduce((height, prop) => {
+      const isVisible = prop.visible === undefined || 
+        (typeof prop.visible === 'function' ? 
+          prop.visible(node.properties) : 
+          prop.visible);
+      return height + (isVisible ? 20 : 0);
+    }, 0) : 0;
 
     const width = Math.max(200, titleWidth + 20, ...descriptionLines.map(line => ctx.measureText(line).width + 20));
     const height = 35 + descriptionHeight + Math.max(inputsHeight, outputsHeight) + propertiesHeight;
@@ -316,10 +322,18 @@ class Renderer {
         ctx.font = '12px Arial';
 
         nodeType.properties.forEach((prop, index) => {
-          let displayValue = node.properties[prop.name] !== undefined ? node.properties[prop.name] : prop.default;
-          const text = `${prop.name}: ${displayValue}`;
-          currentHeight += 20;
-          ctx.fillText(text, node.x + 10, node.y + currentHeight);
+          // Check if property should be visible
+          const isVisible = prop.visible === undefined || 
+            (typeof prop.visible === 'function' ? 
+              prop.visible(node.properties) : 
+              prop.visible);
+
+          if (isVisible) {
+            let displayValue = node.properties[prop.name] !== undefined ? node.properties[prop.name] : prop.default;
+            const text = `${prop.name}: ${displayValue}`;
+            currentHeight += 20;
+            ctx.fillText(text, node.x + 10, node.y + currentHeight);
+          }
         });
       }
     });

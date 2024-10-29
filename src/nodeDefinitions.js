@@ -230,12 +230,62 @@ export const nodeTypes = {
     properties: [
       { name: 'operator', type: 'select', options: ['==', '===', '!=', '!==', '>', '<', '>=', '<='], default: '==' }
     ]
+  },
+  Random: {
+    color: '#9C27B0',
+    inputs: [
+      { type: 'control', name: 'In' }
+    ],
+    outputs: [
+      { type: 'control', name: 'Out' },
+      { type: 'data', name: 'Result' }
+    ],
+    description: 'Generates random values of different types',
+    properties: [
+      { 
+        name: 'type', 
+        type: 'select', 
+        options: ['number', 'string', 'boolean'], 
+        default: 'number',
+        visible: true 
+      },
+      { 
+        name: 'min', 
+        type: 'number', 
+        default: 1,
+        visible: (props) => props.type === 'number'
+      },
+      { 
+        name: 'max', 
+        type: 'number', 
+        default: 100,
+        visible: (props) => props.type === 'number'
+      },
+      { 
+        name: 'length', 
+        type: 'number', 
+        default: 10,
+        visible: (props) => props.type === 'string'
+      },
+      { 
+        name: 'charset', 
+        type: 'string', 
+        default: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        visible: (props) => props.type === 'string'
+      },
+      { 
+        name: 'probability', 
+        type: 'number', 
+        default: 50,
+        visible: (props) => props.type === 'boolean'
+      }
+    ]
   }
 };
 
 export const nodeGroups = {
   "Control Flow": ["OnStart", "If", "Condition", "WhileLoop", "ForLoop"],
-  "Data Manipulation": ["Variable", "MathOperation", "ArrayOperation", "ObjectOperation", "JSONParse", "JSONStringify"],
+  "Data Manipulation": ["Variable", "MathOperation", "ArrayOperation", "ObjectOperation", "JSONParse", "JSONStringify", "Random"],
   "Functions": ["Function"],
   "Input/Output": ["Log", "HttpRequest"],
   "Encoding": ["Base64Encode", "Base64Decode"]

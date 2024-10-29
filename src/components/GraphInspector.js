@@ -19,6 +19,15 @@ const GraphInspector = ({
   const node = selectedNodes[0];
   const nodeType = nodeTypes[node.type];
 
+  // Helper function to determine if a property should be visible
+  const isPropertyVisible = (property) => {
+    if (property.visible === undefined) return true;
+    if (typeof property.visible === 'function') {
+      return property.visible(node.properties);
+    }
+    return property.visible;
+  };
+
   return (
     <div className={`${styles.container} ${config.isDarkTheme ? styles.containerDark : styles.containerLight}`}>
       {/* Header */}
@@ -48,29 +57,31 @@ const GraphInspector = ({
             Properties
           </div>
           {nodeType.properties.map(prop => (
-            <div key={prop.name} className={styles.propertyContainer}>
-              <label className={`${styles.propertyLabel} ${config.isDarkTheme ? styles.propertyLabelDark : styles.propertyLabelLight}`}>
-                {prop.name}
-              </label>
-              {prop.type === 'select' ? (
-                <select
-                  value={node.properties[prop.name] || prop.default}
-                  onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
-                  className={`${styles.input} ${config.isDarkTheme ? styles.inputDark : styles.inputLight}`}
-                >
-                  {prop.options.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type={prop.type === 'number' ? 'number' : 'text'}
-                  value={node.properties[prop.name] || prop.default}
-                  onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
-                  className={`${styles.input} ${config.isDarkTheme ? styles.inputDark : styles.inputLight}`}
-                />
-              )}
-            </div>
+            isPropertyVisible(prop) && (
+              <div key={prop.name} className={styles.propertyContainer}>
+                <label className={`${styles.propertyLabel} ${config.isDarkTheme ? styles.propertyLabelDark : styles.propertyLabelLight}`}>
+                  {prop.name}
+                </label>
+                {prop.type === 'select' ? (
+                  <select
+                    value={node.properties[prop.name] || prop.default}
+                    onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
+                    className={`${styles.input} ${config.isDarkTheme ? styles.inputDark : styles.inputLight}`}
+                  >
+                    {prop.options.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type={prop.type === 'number' ? 'number' : 'text'}
+                    value={node.properties[prop.name] || prop.default}
+                    onChange={(e) => updateNodeProperty(prop.name, e.target.value)}
+                    className={`${styles.input} ${config.isDarkTheme ? styles.inputDark : styles.inputLight}`}
+                  />
+                )}
+              </div>
+            )
           ))}
         </div>
       )}

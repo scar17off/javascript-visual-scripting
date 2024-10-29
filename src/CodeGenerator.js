@@ -151,6 +151,38 @@ class CodeGenerator {
       case 'If':
         this.handleIfNode(node);
         break;
+      case 'Random':
+        const randomType = node.properties.type || 'number';
+        const resultVar = this.getUniqueVariableName('randomResult');
+        
+        switch (randomType) {
+          case 'number':
+            const min = parseFloat(node.properties.min) || 1;
+            const max = parseFloat(node.properties.max) || 100;
+            this.addLine(`const ${resultVar} = Math.floor(Math.random() * (${max} - ${min} + 1)) + ${min};`);
+            break;
+            
+          case 'string':
+            const length = parseInt(node.properties.length) || 10;
+            const charset = node.properties.charset || 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            this.addLine(`let ${resultVar} = '';`);
+            this.addLine(`for (let i = 0; i < ${length}; i++) {`);
+            this.indentLevel++;
+            this.addLine(`${resultVar} += ${JSON.stringify(charset)}[Math.floor(Math.random() * ${charset.length})];`);
+            this.indentLevel--;
+            this.addLine(`}`);
+            break;
+            
+          case 'boolean':
+            const probability = parseFloat(node.properties.probability) || 50;
+            this.addLine(`const ${resultVar} = Math.random() * 100 < ${probability};`);
+            break;
+          default:
+            this.addLine(`// Unknown random type: ${node.properties.type}`);
+        }
+        
+        this.nodeOutputs.set(node.id, resultVar);
+        break;
       default:
         this.addLine(`// TODO: Implement ${node.type}`);
     }

@@ -71,7 +71,8 @@ const MenuBar = ({
               {menu === 'Help' && [
                 <button key="example1" onClick={() => handleMenuItemClick('loadExample', 'example1')} className={`${styles.menuItemButton} ${styles[theme]}`}>Example 1: Hello World</button>,
                 <button key="example2" onClick={() => handleMenuItemClick('loadExample', 'example2')} className={`${styles.menuItemButton} ${styles[theme]}`}>Example 2: Basic Math</button>,
-                <button key="example3" onClick={() => handleMenuItemClick('loadExample', 'example3')} className={`${styles.menuItemButton} ${styles[theme]}`}>Example 3: If Statement</button>
+                <button key="example3" onClick={() => handleMenuItemClick('loadExample', 'example3')} className={`${styles.menuItemButton} ${styles[theme]}`}>Example 3: If Statement</button>,
+                <button key="example4" onClick={() => handleMenuItemClick('loadExample', 'example4')} className={`${styles.menuItemButton} ${styles[theme]}`}>Example 4: Random Number</button>
               ]}
             </div>
           )}
