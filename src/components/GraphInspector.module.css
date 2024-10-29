@@ -111,11 +111,12 @@
 }
 
 .input {
-  width: 100%;
+  width: calc(100% - 8px); /* Subtract padding from width */
   padding: 4px;
   border-radius: 4px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
+  box-sizing: border-box; /* Include padding in width calculation */
 }
 
 .inputDark {
