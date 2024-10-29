@@ -39,6 +39,8 @@ const GraphInspector = ({
         {nodeType.description}
       </div>
 
+      <hr></hr>
+
       {/* Properties */}
       {nodeType.properties && nodeType.properties.length > 0 && (
         <div className={styles.section}>
@@ -73,6 +75,8 @@ const GraphInspector = ({
         </div>
       )}
 
+      <hr></hr>
+      
       {/* Ports */}
       <div className={styles.section}>
         {/* Input Ports */}

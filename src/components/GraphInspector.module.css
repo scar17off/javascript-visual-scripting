@@ -1,6 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 .container {
   height: 100%;
   overflow: auto;
+  font-family: 'Inter', sans-serif;
 }
 
 .containerDark {
@@ -42,7 +45,8 @@
 }
 
 .nodeTitle {
-  font-weight: bold;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .nodeTitleDark {
@@ -55,7 +59,8 @@
 
 .description {
   padding: 10px;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .descriptionDark {
@@ -73,8 +78,9 @@
 }
 
 .sectionTitle {
-  font-weight: bold;
+  font-weight: 600;
   margin-bottom: 10px;
+  letter-spacing: 0.01em;
 }
 
 .sectionTitleDark {
@@ -92,7 +98,8 @@
 .propertyLabel {
   display: block;
   margin-bottom: 5px;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .propertyLabelDark {
@@ -107,6 +114,8 @@
   width: 100%;
   padding: 4px;
   border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
 }
 
 .inputDark {
@@ -126,6 +135,7 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+  font-size: 13px;
 }
 
 .portContainerDark {
@@ -145,12 +155,14 @@
 
 .portType {
   opacity: 0.7;
+  font-weight: 500;
 }
 
 .emptyMessage {
   padding: 10px;
   font-style: italic;
   text-align: center;
+  font-size: 13px;
 }
 
 .emptyMessageDark {
