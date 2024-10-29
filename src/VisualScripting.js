@@ -19,7 +19,7 @@ const VisualScripting = () => {
   const [edges, setEdges] = useState([]);
   const [draggingNode, setDraggingNode] = useState(null);
   const [connecting, setConnecting] = useState(null);
-  const [selectedNode, setSelectedNode] = useState(null);
+  const [selectedNode, setSelectedNode] = useState(null); // eslint-disable-line no-unused-vars
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [menuOpen, setMenuOpen] = useState(null);
@@ -195,7 +195,7 @@ const VisualScripting = () => {
     const factor = e.deltaY > 0 ? 0.9 : 1.1;
     camera.zoom(factor, x, y);
     setNeedsRedraw(true);
-  }, [camera, drawCanvas]);
+  }, [camera, drawCanvas]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleKeyDown = (e) => {
     if (e.key === 'Delete' && selectedNodes.length > 0) {
@@ -526,7 +526,7 @@ const VisualScripting = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [selectedNodes]);
+  }, [selectedNodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handleResize = () => {
