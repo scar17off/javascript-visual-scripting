@@ -148,6 +148,9 @@ class CodeGenerator {
       case 'Base64Decode':
         this.handleBase64DecodeNode(node);
         break;
+      case 'If':
+        this.handleIfNode(node);
+        break;
       default:
         this.addLine(`// TODO: Implement ${node.type}`);
     }
@@ -599,6 +602,53 @@ class CodeGenerator {
       /^\/\*/
     ];
     return !noSemicolonPatterns.some(pattern => pattern.test(line.trim()));
+  }
+
+  handleIfNode(node) {
+    const inputA = this.getNodeInputValue(node, 1);
+    const inputB = this.getNodeInputValue(node, 2);
+    const operator = node.properties.operator || '==';
+
+    if (inputA === undefined || inputB === undefined) {
+      this.addLine('// Warning: If node is missing input values');
+      return;
+    }
+
+    this.addLine(`if (${inputA} ${operator} ${inputB}) {`);
+    this.indentLevel++;
+
+    // Find and generate code for the 'True' branch
+    const trueEdge = this.edges.find(edge => 
+      edge.start.nodeId === node.id && 
+      edge.start.isInput === false && 
+      edge.start.index === 0
+    );
+    if (trueEdge) {
+      const trueNode = this.nodes.find(n => n.id === trueEdge.end.nodeId);
+      if (trueNode) {
+        this.generateNodeCodeSequence(trueNode);
+      }
+    }
+
+    this.indentLevel--;
+    this.addLine("} else {");
+    this.indentLevel++;
+
+    // Find and generate code for the 'False' branch
+    const falseEdge = this.edges.find(edge => 
+      edge.start.nodeId === node.id && 
+      edge.start.isInput === false && 
+      edge.start.index === 1
+    );
+    if (falseEdge) {
+      const falseNode = this.nodes.find(n => n.id === falseEdge.end.nodeId);
+      if (falseNode) {
+        this.generateNodeCodeSequence(falseNode);
+      }
+    }
+
+    this.indentLevel--;
+    this.addLine("}");
   }
 }
 

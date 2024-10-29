@@ -214,11 +214,27 @@ export const nodeTypes = {
     ],
     description: 'Decodes a Base64 string',
     properties: []
+  },
+  If: {
+    color: '#00BCD4',
+    inputs: [
+      { type: 'control', name: 'In' },
+      { type: 'data', name: 'A' },
+      { type: 'data', name: 'B' }
+    ],
+    outputs: [
+      { type: 'control', name: 'True' },
+      { type: 'control', name: 'False' }
+    ],
+    description: 'Compares two values and branches based on the condition',
+    properties: [
+      { name: 'operator', type: 'select', options: ['==', '===', '!=', '!==', '>', '<', '>=', '<='], default: '==' }
+    ]
   }
 };
 
 export const nodeGroups = {
-  "Control Flow": ["OnStart", "Condition", "WhileLoop", "ForLoop"],
+  "Control Flow": ["OnStart", "If", "Condition", "WhileLoop", "ForLoop"],
   "Data Manipulation": ["Variable", "MathOperation", "ArrayOperation", "ObjectOperation", "JSONParse", "JSONStringify"],
   "Functions": ["Function"],
   "Input/Output": ["Log", "HttpRequest"],

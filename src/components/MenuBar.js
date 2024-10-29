@@ -79,7 +79,8 @@ const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible
               ]}
               {menu === 'Help' && [
                 <button key="example1" onClick={() => handleMenuItemClick('loadExample', 'example1')} style={{ width: '100%', textAlign: 'left' }}>Example 1: Hello World</button>,
-                <button key="example2" onClick={() => handleMenuItemClick('loadExample', 'example2')} style={{ width: '100%', textAlign: 'left' }}>Example 2: Basic Math</button>
+                <button key="example2" onClick={() => handleMenuItemClick('loadExample', 'example2')} style={{ width: '100%', textAlign: 'left' }}>Example 2: Basic Math</button>,
+                <button key="example3" onClick={() => handleMenuItemClick('loadExample', 'example3')} style={{ width: '100%', textAlign: 'left' }}>Example 3: If Statement</button>
               ]}
             </div>
           )}
