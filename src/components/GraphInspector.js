@@ -2,11 +2,11 @@ import React from 'react';
 import styles from './GraphInspector.module.css';
 import { getIconForNodeType } from './ContextMenu';
 
-const GraphInspector = ({ 
-  selectedNodes, 
-  nodeTypes, 
-  updateNodeProperty, 
-  config 
+const GraphInspector = ({
+  selectedNodes,
+  nodeTypes,
+  updateNodeProperty,
+  config
 }) => {
   if (selectedNodes.length === 0) {
     return (
@@ -33,7 +33,7 @@ const GraphInspector = ({
       {/* Header */}
       <div className={`${styles.header} ${config.isDarkTheme ? styles.headerDark : styles.headerLight}`}>
         <div className={styles.headerContent}>
-          <i 
+          <i
             className={`fas ${getIconForNodeType(node.type)} ${styles.nodeIcon}`}
             style={{ color: nodeType.color }}
           />
@@ -87,7 +87,7 @@ const GraphInspector = ({
       )}
 
       <hr></hr>
-      
+
       {/* Ports */}
       <div className={styles.section}>
         {/* Input Ports */}
@@ -104,7 +104,7 @@ const GraphInspector = ({
 
         {/* Output Ports */}
         <div className={`${styles.sectionTitle} ${config.isDarkTheme ? styles.sectionTitleDark : styles.sectionTitleLight}`}
-             style={{ marginTop: '20px' }}>
+          style={{ marginTop: '20px' }}>
           Output Ports
         </div>
         {nodeType.outputs.map((output, index) => (

@@ -238,10 +238,10 @@ const VisualScripting = () => {
       // Check input ports
       for (let i = 0; i < nodeType.inputs.length; i++) {
         const portX = node.x - PORT_OFFSET - PORT_WIDTH; // Position of gray arrow
-        const portY = node.y + portStartY + i * 20 - PORT_HEIGHT/2;
-        
+        const portY = node.y + portStartY + i * 20 - PORT_HEIGHT / 2;
+
         if (x >= portX && x <= portX + PORT_WIDTH * SCALE_MULTIPLIER &&
-            y >= portY && y <= portY + PORT_HEIGHT * SCALE_MULTIPLIER) {
+          y >= portY && y <= portY + PORT_HEIGHT * SCALE_MULTIPLIER) {
           return { nodeId: node.id, isInput: true, index: i };
         }
       }
@@ -249,10 +249,10 @@ const VisualScripting = () => {
       // Check output ports
       for (let i = 0; i < nodeType.outputs.length; i++) {
         const portX = node.x + width + PORT_OFFSET; // Position of gray arrow
-        const portY = node.y + portStartY + i * 20 - PORT_HEIGHT/2;
-        
+        const portY = node.y + portStartY + i * 20 - PORT_HEIGHT / 2;
+
         if (x >= portX && x <= portX + PORT_WIDTH * SCALE_MULTIPLIER &&
-            y >= portY && y <= portY + PORT_HEIGHT * SCALE_MULTIPLIER) {
+          y >= portY && y <= portY + PORT_HEIGHT * SCALE_MULTIPLIER) {
           return { nodeId: node.id, isInput: false, index: i };
         }
       }
@@ -566,12 +566,12 @@ const VisualScripting = () => {
       const newConfig = { ...prevConfig };
       const parts = path.split('.');
       let current = newConfig;
-      
+
       for (let i = 0; i < parts.length - 1; i++) {
         current[parts[i]] = { ...current[parts[i]] };
         current = current[parts[i]];
       }
-      
+
       current[parts[parts.length - 1]] = value;
       return newConfig;
     });

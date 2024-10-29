@@ -11,8 +11,3 @@
 
 - [ ] Add new node types:
   - [ ] Switch
-  - [ ] Random
-    - [ ] Types:
-      - [ ] Number (with properties: min: 1, max: 100)
-      - [ ] String (with properties: length: 10, charset: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789)
-      - [ ] Boolean (with properties: probability: 50)

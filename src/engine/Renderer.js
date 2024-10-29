@@ -55,9 +55,9 @@ class Renderer {
     const inputsHeight = nodeType.inputs.length * 20;
     const outputsHeight = nodeType.outputs.length * 20;
     const propertiesHeight = nodeType.properties ? nodeType.properties.reduce((height, prop) => {
-      const isVisible = prop.visible === undefined || 
-        (typeof prop.visible === 'function' ? 
-          prop.visible(node.properties) : 
+      const isVisible = prop.visible === undefined ||
+        (typeof prop.visible === 'function' ?
+          prop.visible(node.properties) :
           prop.visible);
       return height + (isVisible ? 20 : 0);
     }, 0) : 0;
@@ -117,17 +117,17 @@ class Renderer {
     edges.forEach(edge => {
       const startNode = nodes.find(n => n.id === edge.start.nodeId);
       const endNode = nodes.find(n => n.id === edge.end.nodeId);
-      
+
       if (!startNode || !endNode) return;
 
       // Quick bounds check for edge endpoints
       const startDims = this.getNodeDimensions(startNode, ctx);
       const endDims = this.getNodeDimensions(endNode, ctx);
-      
+
       // Skip if both nodes are completely outside view (with padding)
       const padding = 200; // Larger padding for edges due to curves
       if (!this.isRectInView(startNode.x, startNode.y, startDims.width, startDims.height, ctx.canvas.width, ctx.canvas.height, padding) &&
-          !this.isRectInView(endNode.x, endNode.y, endDims.width, endDims.height, ctx.canvas.width, ctx.canvas.height, padding)) {
+        !this.isRectInView(endNode.x, endNode.y, endDims.width, endDims.height, ctx.canvas.width, ctx.canvas.height, padding)) {
         return;
       }
 
@@ -173,7 +173,7 @@ class Renderer {
   drawPortIcon(ctx, x, y, isInput) {
     const offset = 5; // Distance from node border
     const arrowX = isInput ? x - offset : x + offset;
-    
+
     ctx.beginPath();
     if (isInput) {
       ctx.moveTo(arrowX - 6, y - 5);
@@ -193,7 +193,7 @@ class Renderer {
   drawLabelArrow(ctx, x, y, isControl) {
     if (isControl) {
       const lineLength = 10;
-      
+
       // Draw line
       ctx.beginPath();
       ctx.moveTo(x, y);
@@ -222,7 +222,7 @@ class Renderer {
   drawNodes(ctx, nodes, edges, selectedNodes) {
     nodes.forEach(node => {
       const { width, height } = this.getNodeDimensions(node, ctx);
-      
+
       if (!this.isRectInView(node.x, node.y, width, height, ctx.canvas.width, ctx.canvas.height)) {
         return;
       }
@@ -276,18 +276,18 @@ class Renderer {
       nodeType.inputs.forEach((input, i) => {
         const portY = node.y + currentHeight + i * 20;
         const isControl = input.type === 'control';
-        
+
         // Check if port is connected
-        const isPortConnected = edges.some(edge => 
-          edge.end.nodeId === node.id && 
-          edge.end.index === i && 
+        const isPortConnected = edges.some(edge =>
+          edge.end.nodeId === node.id &&
+          edge.end.index === i &&
           edge.end.isInput
         );
-        
+
         if (!isPortConnected) {
           this.drawPortIcon(ctx, node.x, portY, true);
         }
-        
+
         this.drawLabelArrow(ctx, node.x + 15, portY, isControl);
         ctx.fillStyle = 'white';
         ctx.fillText(input.name, node.x + 35, portY + 5);
@@ -297,17 +297,17 @@ class Renderer {
       nodeType.outputs.forEach((output, i) => {
         const portY = node.y + currentHeight + i * 20;
         const isControl = output.type === 'control';
-        
-        const isPortConnected = edges.some(edge => 
-          edge.start.nodeId === node.id && 
-          edge.start.index === i && 
+
+        const isPortConnected = edges.some(edge =>
+          edge.start.nodeId === node.id &&
+          edge.start.index === i &&
           !edge.start.isInput
         );
-        
+
         if (!isPortConnected) {
           this.drawPortIcon(ctx, node.x + width, portY, false);
         }
-        
+
         ctx.fillStyle = 'white';
         const textWidth = ctx.measureText(output.name).width;
         ctx.fillText(output.name, node.x + width - textWidth - 35, portY + 5);
@@ -323,9 +323,9 @@ class Renderer {
 
         nodeType.properties.forEach((prop, index) => {
           // Check if property should be visible
-          const isVisible = prop.visible === undefined || 
-            (typeof prop.visible === 'function' ? 
-              prop.visible(node.properties) : 
+          const isVisible = prop.visible === undefined ||
+            (typeof prop.visible === 'function' ?
+              prop.visible(node.properties) :
               prop.visible);
 
           if (isVisible) {
@@ -384,9 +384,9 @@ class Renderer {
     };
 
     return !(x + width < viewBounds.left - padding ||
-             x > viewBounds.right + padding ||
-             y + height < viewBounds.top - padding ||
-             y > viewBounds.bottom + padding);
+      x > viewBounds.right + padding ||
+      y + height < viewBounds.top - padding ||
+      y > viewBounds.bottom + padding);
   }
 }
 

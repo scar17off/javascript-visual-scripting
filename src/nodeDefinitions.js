@@ -242,40 +242,40 @@ export const nodeTypes = {
     ],
     description: 'Generates random values of different types',
     properties: [
-      { 
-        name: 'type', 
-        type: 'select', 
-        options: ['number', 'string', 'boolean'], 
+      {
+        name: 'type',
+        type: 'select',
+        options: ['number', 'string', 'boolean'],
         default: 'number',
-        visible: true 
+        visible: true
       },
-      { 
-        name: 'min', 
-        type: 'number', 
+      {
+        name: 'min',
+        type: 'number',
         default: 1,
         visible: (props) => props.type === 'number'
       },
-      { 
-        name: 'max', 
-        type: 'number', 
+      {
+        name: 'max',
+        type: 'number',
         default: 100,
         visible: (props) => props.type === 'number'
       },
-      { 
-        name: 'length', 
-        type: 'number', 
+      {
+        name: 'length',
+        type: 'number',
         default: 10,
         visible: (props) => props.type === 'string'
       },
-      { 
-        name: 'charset', 
-        type: 'string', 
+      {
+        name: 'charset',
+        type: 'string',
         default: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
         visible: (props) => props.type === 'string'
       },
-      { 
-        name: 'probability', 
-        type: 'number', 
+      {
+        name: 'probability',
+        type: 'number',
         default: 50,
         visible: (props) => props.type === 'boolean'
       }
