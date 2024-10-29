@@ -1,8 +1,15 @@
 import React from 'react';
 import styles from './MenuBar.module.css';
 
-const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible, isMinimapVisible, isDarkTheme, toggleTheme, isNodeRoundingEnabled, toggleNodeRounding, isGraphInspectorVisible }) => {
-  const theme = isDarkTheme ? 'dark' : 'light';
+const MenuBar = ({
+  menuOpen,
+  handleMenuClick,
+  handleMenuItemClick,
+  config,
+  toggleTheme,
+  toggleNodeRounding
+}) => {
+  const theme = config.isDarkTheme ? 'dark' : 'light';
 
   return (
     <div className={`${styles.menuBar} ${styles[theme]}`}>
@@ -35,19 +42,19 @@ const MenuBar = ({ menuOpen, handleMenuClick, handleMenuItemClick, isGridVisible
                 <button key="zoomOut" onClick={() => handleMenuItemClick('zoomOut')} className={`${styles.menuItemButton} ${styles[theme]}`}>Zoom Out</button>,
                 <button key="resetView" onClick={() => handleMenuItemClick('resetView')} className={`${styles.menuItemButton} ${styles[theme]}`}>Reset View</button>,
                 <button key="toggleGrid" onClick={() => handleMenuItemClick('toggleGrid')} className={`${styles.menuItemButton} ${styles[theme]}`}>
-                  {isGridVisible ? 'Hide Grid' : 'Show Grid'}
+                  {config.isGridVisible ? 'Hide Grid' : 'Show Grid'}
                 </button>,
                 <button key="toggleMinimap" onClick={() => handleMenuItemClick('toggleMinimap')} className={`${styles.menuItemButton} ${styles[theme]}`}>
-                  {isMinimapVisible ? 'Hide Minimap' : 'Show Minimap'}
+                  {config.isMinimapVisible ? 'Hide Minimap' : 'Show Minimap'}
                 </button>,
                 <button key="toggleTheme" onClick={toggleTheme} className={`${styles.menuItemButton} ${styles[theme]}`}>
-                  {isDarkTheme ? 'Light Theme' : 'Dark Theme'}
+                  {config.isDarkTheme ? 'Light Theme' : 'Dark Theme'}
                 </button>,
                 <button key="toggleNodeRounding" onClick={() => handleMenuItemClick('toggleNodeRounding')} className={`${styles.menuItemButton} ${styles[theme]}`}>
-                  {isNodeRoundingEnabled ? 'Disable Node Rounding' : 'Enable Node Rounding'}
+                  {config.isNodeRoundingEnabled ? 'Disable Node Rounding' : 'Enable Node Rounding'}
                 </button>,
                 <button key="toggleGraphInspector" onClick={() => handleMenuItemClick('toggleGraphInspector')} className={`${styles.menuItemButton} ${styles[theme]}`}>
-                  {isGraphInspectorVisible ? 'Hide Graph Inspector' : 'Show Graph Inspector'}
+                  {config.isGraphInspectorVisible ? 'Hide Graph Inspector' : 'Show Graph Inspector'}
                 </button>
               ]}
               {menu === 'Export' && [

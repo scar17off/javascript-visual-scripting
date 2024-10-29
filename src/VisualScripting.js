@@ -25,28 +25,30 @@ const VisualScripting = () => {
   const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [menuOpen, setMenuOpen] = useState(null);
   const [camera] = useState(new Camera(0, 0, 1, 0.75, 2));
+  const [config, setConfig] = useState({
+    isDarkTheme: true,
+    isGridVisible: true,
+    isMinimapVisible: false,
+    isNodeRoundingEnabled: true,
+    isGraphInspectorVisible: true,
+    codeGenerator: {
+      useStrict: true,
+      useSemicolons: true,
+      useConst: false,
+      generateComments: true,
+    }
+  });
+  const [needsRedraw, setNeedsRedraw] = useState(true);
+  const [renderer] = useState(() => new Renderer(camera, config.isDarkTheme, config.isGridVisible, config.isNodeRoundingEnabled));
   const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
   const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
-  const [isGridVisible, setIsGridVisible] = useState(true);
-  const [isMinimapVisible, setIsMinimapVisible] = useState(false);
   const [copiedNodes, setCopiedNodes] = useState([]);
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [tabs, setTabs] = useState([{ id: 'untitled-1', title: 'Untitled-1', type: 'Export' }]);
   const [activeTab, setActiveTab] = useState('untitled-1');
-  const [codeGeneratorSettings, setCodeGeneratorSettings] = useState({
-    useStrict: true,
-    useSemicolons: true,
-    useConst: false,
-    generateComments: true,
-  });
-  const [isNodeRoundingEnabled, setIsNodeRoundingEnabled] = useState(true);
-  const [needsRedraw, setNeedsRedraw] = useState(true);
-  const [renderer] = useState(() => new Renderer(camera, isDarkTheme, isGridVisible, isNodeRoundingEnabled));
-  const [isGraphInspectorVisible, setIsGraphInspectorVisible] = useState(true);
   // #endregion
 
   // #region Drawing Functions
@@ -392,17 +394,15 @@ const VisualScripting = () => {
         break;
       case 'zoomIn':
         camera.zoom(1.1, canvasSize.width / 2, canvasSize.height / 2);
-        drawCanvas();
+        setNeedsRedraw(true);
         break;
       case 'zoomOut':
         camera.zoom(0.9, canvasSize.width / 2, canvasSize.height / 2);
-        drawCanvas();
+        setNeedsRedraw(true);
         break;
       case 'resetView':
-        camera.x = 0;
-        camera.y = 0;
-        camera.scale = 1;
-        drawCanvas();
+        camera.reset();
+        setNeedsRedraw(true);
         break;
       case 'runWithoutDebugging':
         runScript(false);
@@ -414,10 +414,10 @@ const VisualScripting = () => {
         generateCode();
         break;
       case 'toggleGrid':
-        setIsGridVisible(!isGridVisible);
+        updateConfig('isGridVisible', !config.isGridVisible);
         break;
       case 'toggleMinimap':
-        setIsMinimapVisible(!isMinimapVisible);
+        updateConfig('isMinimapVisible', !config.isMinimapVisible);
         break;
       case 'copy':
         setCopiedNodes([...selectedNodes]);
@@ -461,7 +461,7 @@ const VisualScripting = () => {
         toggleNodeRounding();
         break;
       case 'toggleGraphInspector':
-        setIsGraphInspectorVisible(!isGraphInspectorVisible);
+        updateConfig('isGraphInspectorVisible', !config.isGraphInspectorVisible);
         break;
       default:
         console.log(`Unhandled menu action: ${action}`);
@@ -498,7 +498,7 @@ const VisualScripting = () => {
   };
 
   const generateCode = () => {
-    const codeGenerator = new CodeGenerator(nodes, edges, codeGeneratorSettings);
+    const codeGenerator = new CodeGenerator(nodes, edges, config.codeGenerator);
     const generatedCode = codeGenerator.generate();
     console.log('Generated Code:');
     console.log(generatedCode);
@@ -543,29 +543,36 @@ const VisualScripting = () => {
   }, []);
 
   useEffect(() => {
-    renderer.setDarkTheme(isDarkTheme);
-    renderer.setGridVisible(isGridVisible);
-    renderer.setNodeRoundingEnabled(isNodeRoundingEnabled);
+    renderer.setDarkTheme(config.isDarkTheme);
+    renderer.setGridVisible(config.isGridVisible);
+    renderer.setNodeRoundingEnabled(config.isNodeRoundingEnabled);
     setNeedsRedraw(true);
-  }, [isDarkTheme, isGridVisible, isNodeRoundingEnabled, renderer]);
+  }, [config.isDarkTheme, config.isGridVisible, config.isNodeRoundingEnabled, renderer]);
   // #endregion
 
-  const toggleTheme = () => {
-    setIsDarkTheme(prevTheme => !prevTheme);
-  };
-
-  const toggleGrid = () => setIsGridVisible(!isGridVisible);
-  const toggleMinimap = () => setIsMinimapVisible(!isMinimapVisible);
+  const toggleTheme = () => updateConfig('isDarkTheme', !config.isDarkTheme);
+  const toggleGrid = () => updateConfig('isGridVisible', !config.isGridVisible);
+  const toggleMinimap = () => updateConfig('isMinimapVisible', !config.isMinimapVisible);
+  const toggleNodeRounding = () => updateConfig('isNodeRoundingEnabled', !config.isNodeRoundingEnabled);
 
   const updateCodeGeneratorSettings = (setting, value) => {
-    setCodeGeneratorSettings(prevSettings => ({
-      ...prevSettings,
-      [setting]: value,
-    }));
+    updateConfig(`codeGenerator.${setting}`, value);
   };
 
-  const toggleNodeRounding = () => {
-    setIsNodeRoundingEnabled(!isNodeRoundingEnabled);
+  const updateConfig = (path, value) => {
+    setConfig(prevConfig => {
+      const newConfig = { ...prevConfig };
+      const parts = path.split('.');
+      let current = newConfig;
+      
+      for (let i = 0; i < parts.length - 1; i++) {
+        current[parts[i]] = { ...current[parts[i]] };
+        current = current[parts[i]];
+      }
+      
+      current[parts[parts.length - 1]] = value;
+      return newConfig;
+    });
   };
 
   // #region Export Functions
@@ -588,13 +595,13 @@ const VisualScripting = () => {
     const background = document.createElementNS(svgNS, "rect");
     background.setAttribute("width", "100%");
     background.setAttribute("height", "100%");
-    background.setAttribute("fill", isDarkTheme ? "#2d2d2d" : "#e0e0e0");
+    background.setAttribute("fill", config.isDarkTheme ? "#2d2d2d" : "#e0e0e0");
     svg.appendChild(background);
 
     // Draw grid if visible
-    if (isGridVisible) {
+    if (config.isGridVisible) {
       const gridGroup = document.createElementNS(svgNS, "g");
-      gridGroup.setAttribute("stroke", isDarkTheme ? "#3a3a3a" : "#d0d0d0");
+      gridGroup.setAttribute("stroke", config.isDarkTheme ? "#3a3a3a" : "#d0d0d0");
       gridGroup.setAttribute("stroke-width", "1");
 
       for (let x = 0; x <= canvasRect.width; x += renderer.GRID_SIZE) {
@@ -738,7 +745,7 @@ const VisualScripting = () => {
   };
 
   const exportAsJavaScript = () => {
-    const codeGenerator = new CodeGenerator(nodes, edges, codeGeneratorSettings);
+    const codeGenerator = new CodeGenerator(nodes, edges, config.codeGenerator);
     const generatedCode = codeGenerator.generate();
     const blob = new Blob([generatedCode], { type: 'text/javascript' });
     saveAs(blob, 'generated_script.js');
@@ -749,8 +756,8 @@ const VisualScripting = () => {
   return (
     <div
       style={{
-        backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0',
-        color: isDarkTheme ? '#fff' : '#000',
+        backgroundColor: config.isDarkTheme ? '#1e1e1e' : '#f0f0f0',
+        color: config.isDarkTheme ? '#fff' : '#000',
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
@@ -766,11 +773,8 @@ const VisualScripting = () => {
         menuOpen={menuOpen}
         handleMenuClick={handleMenuClick}
         handleMenuItemClick={handleMenuItemClick}
-        isGridVisible={isGridVisible}
-        isMinimapVisible={isMinimapVisible}
-        isDarkTheme={isDarkTheme}
+        config={config}
         toggleTheme={toggleTheme}
-        isNodeRoundingEnabled={isNodeRoundingEnabled}
         toggleNodeRounding={toggleNodeRounding}
       />
       <Tabs
@@ -778,22 +782,48 @@ const VisualScripting = () => {
         activeTab={activeTab}
         onTabClick={handleTabClick}
         onTabClose={handleTabClose}
-        isDarkTheme={isDarkTheme}
+        isDarkTheme={config.isDarkTheme}
       />
       <div style={{ flex: 1, position: 'relative', display: 'flex' }}>
         {activeTab === 'untitled-1' ? (
           <>
-            {isGraphInspectorVisible && (
+            {config.isGraphInspectorVisible && (
               <div style={{
                 width: '300px',
                 height: '100%',
                 flexShrink: 0,
+                borderRight: config.isDarkTheme ? '1px solid #555' : '1px solid #999',
               }}>
                 <GraphInspector
                   selectedNodes={selectedNodes}
                   nodeTypes={nodeTypes}
                   updateNodeProperty={updateNodeProperty}
-                  isDarkTheme={isDarkTheme}
+                  config={config}
+                />
+              </div>
+            )}
+            {config.isMinimapVisible && (
+              <div style={{
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                margin: '10px',
+                width: '200px',
+                height: '200px',
+                backgroundColor: config.isDarkTheme ? '#1e1e1e' : '#f0f0f0',
+                border: config.isDarkTheme ? '1px solid #555' : '1px solid #999',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                zIndex: 1000
+              }}>
+                <Minimap
+                  nodes={nodes}
+                  edges={edges}
+                  camera={camera}
+                  canvasSize={canvasSize}
+                  getNodeDimensions={(node, ctx) => renderer.getNodeDimensions(node, ctx)}
+                  nodeTypes={nodeTypes}
+                  config={config}
                 />
               </div>
             )}
@@ -801,14 +831,14 @@ const VisualScripting = () => {
               <canvas
                 ref={canvasRef}
                 width={canvasSize.width}
-                height={canvasSize.height - 65} // 30px for MenuBar + 35px for Tabs
+                height={canvasSize.height - 65}
                 onContextMenu={handleContextMenu}
                 onClick={handleCanvasClick}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
-                style={{ backgroundColor: isDarkTheme ? '#2d2d2d' : '#e0e0e0', display: 'block' }}
+                style={{ backgroundColor: config.isDarkTheme ? '#2d2d2d' : '#e0e0e0', display: 'block' }}
               />
               <ContextMenu
                 visible={contextMenu.visible}
@@ -819,41 +849,15 @@ const VisualScripting = () => {
                 addNode={addNode}
                 camera={camera}
               />
-              {isMinimapVisible && (
-                <div style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: 0,
-                  width: '200px',
-                  height: canvasSize.height - 30,
-                  backgroundColor: isDarkTheme ? '#1e1e1e' : '#f0f0f0',
-                  borderLeft: isDarkTheme ? '1px solid #555' : '1px solid #999'
-                }}>
-                  <Minimap
-                    nodes={nodes}
-                    edges={edges}
-                    camera={camera}
-                    canvasSize={canvasSize}
-                    getNodeDimensions={(node, ctx) => renderer.getNodeDimensions(node, ctx)}
-                    nodeTypes={nodeTypes}
-                    wrapText={(ctx, text, maxWidth) => renderer.wrapText(ctx, text, maxWidth)}
-                    isDarkTheme={isDarkTheme}
-                  />
-                </div>
-              )}
             </div>
           </>
         ) : activeTab === 'settings' ? (
           <SettingsTab
-            isDarkTheme={isDarkTheme}
+            config={config}
             toggleTheme={toggleTheme}
-            isGridVisible={isGridVisible}
             toggleGrid={toggleGrid}
-            isMinimapVisible={isMinimapVisible}
             toggleMinimap={toggleMinimap}
-            codeGeneratorSettings={codeGeneratorSettings}
             updateCodeGeneratorSettings={updateCodeGeneratorSettings}
-            isNodeRoundingEnabled={isNodeRoundingEnabled}
             toggleNodeRounding={toggleNodeRounding}
           />
         ) : null}

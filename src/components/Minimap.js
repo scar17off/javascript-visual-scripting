@@ -1,26 +1,44 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 
-const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeTypes, wrapText }) => {
+const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeTypes }) => {
   const minimapRef = useRef(null);
 
   const drawMinimap = useCallback(() => {
     const minimap = minimapRef.current;
+    if (!minimap || !nodes || !edges) return;
+    
     const minimapCtx = minimap.getContext('2d');
+    if (!minimapCtx) return;
 
-    // Clear the minimap
-    minimapCtx.clearRect(0, 0, minimap.width, minimap.height);
+    // Clear the minimap with background color
+    minimapCtx.fillStyle = '#1e1e1e';
+    minimapCtx.fillRect(0, 0, minimap.width, minimap.height);
+
+    // If there are no nodes, return early
+    if (!nodes.length) return;
 
     // Calculate the bounds of all nodes
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    // First pass: calculate dimensions
     nodes.forEach(node => {
-      const { width, height } = getNodeDimensions(node, minimapCtx);
-      minX = Math.min(minX, node.x);
-      minY = Math.min(minY, node.y);
-      maxX = Math.max(maxX, node.x + width);
-      maxY = Math.max(maxY, node.y + height);
+      try {
+        const { width, height } = getNodeDimensions(node, minimapCtx);
+        minX = Math.min(minX, node.x);
+        minY = Math.min(minY, node.y);
+        maxX = Math.max(maxX, node.x + width);
+        maxY = Math.max(maxY, node.y + height);
+      } catch (error) {
+        console.warn('Error calculating node dimensions:', error);
+      }
     });
 
-    // Add some padding
+    // Handle case where no valid dimensions were found
+    if (minX === Infinity || minY === Infinity || maxX === -Infinity || maxY === -Infinity) {
+      return;
+    }
+
+    // Add padding
     const padding = 50;
     minX -= padding;
     minY -= padding;
@@ -30,7 +48,7 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
     // Calculate the scale to fit the nodes in the minimap
     const scaleX = minimap.width / (maxX - minX);
     const scaleY = minimap.height / (maxY - minY);
-    const scale = Math.min(scaleX, scaleY);
+    const scale = Math.min(scaleX, scaleY, 1);
 
     // Draw edges
     edges.forEach(edge => {
@@ -131,15 +149,40 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
   }, [nodes, edges, camera, canvasSize, getNodeDimensions, nodeTypes]);
 
   useEffect(() => {
-    drawMinimap();
+    try {
+      drawMinimap();
+    } catch (error) {
+      console.error('Error drawing minimap:', error);
+    }
+  }, [drawMinimap]);
+
+  useEffect(() => {
+    const canvas = minimapRef.current;
+    if (!canvas) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      drawMinimap();
+    });
+
+    resizeObserver.observe(canvas);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, [drawMinimap]);
 
   return (
     <canvas
       ref={minimapRef}
       width={200}
-      height={canvasSize.height - 30}
-      style={{ display: 'block' }}
+      height={200}
+      style={{
+        display: 'block',
+        width: '200px',
+        height: '200px',
+        backgroundColor: '#1e1e1e',
+        border: '1px solid #333'
+      }}
     />
   );
 };

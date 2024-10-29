@@ -42,6 +42,12 @@ class Camera {
       y: worldY * this.scale + this.y
     };
   }
+
+  reset() {
+    this.x = 0;
+    this.y = 0;
+    this.scale = 1;
+  }
 }
 
 export default Camera;

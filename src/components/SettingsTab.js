@@ -2,32 +2,28 @@ import React from 'react';
 import './CustomCheckbox.css';
 
 const SettingsTab = ({
-  isDarkTheme,
+  config,
   toggleTheme,
-  isGridVisible,
   toggleGrid,
-  isMinimapVisible,
   toggleMinimap,
-  codeGeneratorSettings,
   updateCodeGeneratorSettings,
-  isNodeRoundingEnabled,
   toggleNodeRounding
 }) => {
   const sectionStyle = {
-    backgroundColor: isDarkTheme ? '#2d2d2d' : '#f0f0f0',
+    backgroundColor: config.isDarkTheme ? '#2d2d2d' : '#f0f0f0',
     padding: '20px',
     borderRadius: '8px',
     marginBottom: '20px',
   };
 
   const headingStyle = {
-    color: isDarkTheme ? '#ffffff' : '#000000',
+    color: config.isDarkTheme ? '#ffffff' : '#000000',
     paddingBottom: '10px',
     marginBottom: '20px',
   };
 
   const CustomCheckbox = ({ checked, onChange, label }) => (
-    <label className={`checkbox-container ${isDarkTheme ? 'dark' : 'light'}`}>
+    <label className={`checkbox-container ${config.isDarkTheme ? 'dark' : 'light'}`}>
       <input
         type="checkbox"
         checked={checked}
@@ -41,15 +37,15 @@ const SettingsTab = ({
   return (
     <div style={{
       padding: '20px',
-      color: isDarkTheme ? '#fff' : '#000',
-      backgroundColor: isDarkTheme ? '#1e1e1e' : '#ffffff'
+      color: config.isDarkTheme ? '#fff' : '#000',
+      backgroundColor: config.isDarkTheme ? '#1e1e1e' : '#ffffff'
     }}>
       <h2 style={{ ...headingStyle, fontSize: '24px' }}>Settings</h2>
 
       <div style={sectionStyle}>
         <h3 style={headingStyle}>Theme</h3>
         <CustomCheckbox
-          checked={isDarkTheme}
+          checked={config.isDarkTheme}
           onChange={toggleTheme}
           label="Dark Theme"
         />
@@ -58,17 +54,17 @@ const SettingsTab = ({
       <div style={sectionStyle}>
         <h3 style={headingStyle}>Canvas</h3>
         <CustomCheckbox
-          checked={isGridVisible}
+          checked={config.isGridVisible}
           onChange={toggleGrid}
           label="Show Grid"
         />
         <CustomCheckbox
-          checked={isMinimapVisible}
+          checked={config.isMinimapVisible}
           onChange={toggleMinimap}
           label="Show Minimap"
         />
         <CustomCheckbox
-          checked={isNodeRoundingEnabled}
+          checked={config.isNodeRoundingEnabled}
           onChange={toggleNodeRounding}
           label="Enable Node Rounding"
         />
@@ -77,23 +73,23 @@ const SettingsTab = ({
       <div style={sectionStyle}>
         <h3 style={headingStyle}>Code Generator</h3>
         <CustomCheckbox
-          checked={codeGeneratorSettings.useStrict}
-          onChange={() => updateCodeGeneratorSettings('useStrict', !codeGeneratorSettings.useStrict)}
+          checked={config.codeGenerator.useStrict}
+          onChange={() => updateCodeGeneratorSettings('useStrict', !config.codeGenerator.useStrict)}
           label="Use Strict Mode"
         />
         <CustomCheckbox
-          checked={codeGeneratorSettings.useSemicolons}
-          onChange={() => updateCodeGeneratorSettings('useSemicolons', !codeGeneratorSettings.useSemicolons)}
+          checked={config.codeGenerator.useSemicolons}
+          onChange={() => updateCodeGeneratorSettings('useSemicolons', !config.codeGenerator.useSemicolons)}
           label="Use Semicolons"
         />
         <CustomCheckbox
-          checked={codeGeneratorSettings.useConst}
-          onChange={() => updateCodeGeneratorSettings('useConst', !codeGeneratorSettings.useConst)}
+          checked={config.codeGenerator.useConst}
+          onChange={() => updateCodeGeneratorSettings('useConst', !config.codeGenerator.useConst)}
           label="Use Const (instead of Let)"
         />
         <CustomCheckbox
-          checked={codeGeneratorSettings.generateComments}
-          onChange={() => updateCodeGeneratorSettings('generateComments', !codeGeneratorSettings.generateComments)}
+          checked={config.codeGenerator.generateComments}
+          onChange={() => updateCodeGeneratorSettings('generateComments', !config.codeGenerator.generateComments)}
           label="Generate Comments"
         />
       </div>
