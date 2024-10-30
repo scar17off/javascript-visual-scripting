@@ -55,7 +55,11 @@ export const nodeTypes = {
     color: '#607D8B',
     inputs: [
       { type: 'control', name: 'In' },
-      { type: 'data', name: 'Params' }
+      { 
+        type: 'data', 
+        name: 'param1',
+        description: 'Parameter of type string'
+      }
     ],
     outputs: [
       { type: 'control', name: 'Out' },
@@ -64,7 +68,21 @@ export const nodeTypes = {
     description: 'Defines a reusable function',
     properties: [
       { name: 'name', type: 'string', default: 'myFunction' },
-      { name: 'parameters', type: 'string', default: '' }
+      { 
+        name: 'parameters', 
+        type: 'array', 
+        default: [
+          { name: 'param1', type: 'string' }
+        ],
+        visible: true
+      },
+      {
+        name: 'returnType',
+        type: 'select',
+        options: ['void', 'string', 'number', 'boolean', 'object', 'array'],
+        default: 'void',
+        visible: true
+      }
     ]
   },
   MathOperation: {
