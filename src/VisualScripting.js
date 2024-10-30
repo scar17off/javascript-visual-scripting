@@ -12,6 +12,7 @@ import examples from './examples';
 import { saveAs } from 'file-saver';
 import GraphInspector from './components/GraphInspector';
 import Node from './engine/Node';
+import NodeContextMenu from './components/NodeContextMenu';
 
 const VisualScripting = () => {
   // #region State Declarations
@@ -50,6 +51,7 @@ const VisualScripting = () => {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [tabs, setTabs] = useState([{ id: 'untitled-1', title: 'Untitled-1', type: 'Export' }]);
   const [activeTab, setActiveTab] = useState('untitled-1');
+  const [nodeContextMenu, setNodeContextMenu] = useState({ visible: false, x: 0, y: 0 });
   // #endregion
 
   // #region Drawing Functions
@@ -72,7 +74,16 @@ const VisualScripting = () => {
     e.preventDefault();
     const rect = canvasRef.current.getBoundingClientRect();
     const { x, y } = camera.screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
-    setContextMenu({ visible: true, x, y });
+    
+    const clickedNode = findClickedNode(x, y);
+    if (clickedNode) {
+      setNodeContextMenu({ visible: true, x, y });
+      if (!selectedNodes.includes(clickedNode)) {
+        setSelectedNodes([clickedNode]);
+      }
+    } else {
+      setContextMenu({ visible: true, x, y });
+    }
     setNeedsRedraw(true);
   };
 
@@ -82,6 +93,9 @@ const VisualScripting = () => {
 
     if (contextMenu.visible) {
       setContextMenu({ ...contextMenu, visible: false });
+    }
+    if (nodeContextMenu.visible) {
+      setNodeContextMenu({ ...nodeContextMenu, visible: false });
     }
 
     if (connecting) {
@@ -116,6 +130,13 @@ const VisualScripting = () => {
   const handleMouseDown = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const { x, y } = camera.screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
+
+    if (contextMenu.visible) {
+      setContextMenu({ ...contextMenu, visible: false });
+    }
+    if (nodeContextMenu.visible) {
+      setNodeContextMenu({ ...nodeContextMenu, visible: false });
+    }
 
     const clickedPort = findClickedPort(x, y);
     if (clickedPort) {
@@ -229,8 +250,20 @@ const VisualScripting = () => {
     for (const node of nodes) {
       const nodeType = nodeTypes[node.type];
       const dimensions = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
-      const clickedPort = node.findClickedPort(x, y, dimensions, nodeType);
-      if (clickedPort) return clickedPort;
+      
+      // Check input ports
+      for (let i = 0; i < nodeType.inputs.length; i++) {
+        if (node.isPortClicked(x, y, i, true, dimensions)) {
+          return node.getPortPosition(i, true, dimensions);
+        }
+      }
+
+      // Check output ports
+      for (let i = 0; i < nodeType.outputs.length; i++) {
+        if (node.isPortClicked(x, y, i, false, dimensions)) {
+          return node.getPortPosition(i, false, dimensions);
+        }
+      }
     }
     return null;
   };
@@ -721,6 +754,37 @@ const VisualScripting = () => {
   };
   // #endregion
 
+  // #region Handle Node Context Menu Actions
+  const handleNodeContextMenuAction = (action) => {
+    switch (action) {
+      case 'copy':
+        setCopiedNodes([...selectedNodes]);
+        break;
+      case 'delete':
+        deleteSelectedNodes();
+        break;
+      case 'cut':
+        setCopiedNodes([...selectedNodes]);
+        deleteSelectedNodes();
+        break;
+      case 'duplicate':
+        const newNodes = selectedNodes.map(node => {
+          // Create a proper Node instance using the static create method
+          const duplicatedNode = Node.create(node.type, node.x + 20, node.y + 20, nodeTypes);
+          // Copy over the properties
+          duplicatedNode.properties = { ...node.properties };
+          return duplicatedNode;
+        });
+        setNodes([...nodes, ...newNodes]);
+        setSelectedNodes(newNodes);
+        break;
+      default:
+        console.log(`Unhandled node context menu action: ${action}`);
+    }
+    setNodeContextMenu({ ...nodeContextMenu, visible: false });
+  };
+  // #endregion
+
   // #region Render
   return (
     <div
@@ -817,6 +881,13 @@ const VisualScripting = () => {
                 nodeGroups={nodeGroups}
                 addNode={addNode}
                 camera={camera}
+              />
+              <NodeContextMenu
+                visible={nodeContextMenu.visible}
+                x={nodeContextMenu.x}
+                y={nodeContextMenu.y}
+                camera={camera}
+                onAction={handleNodeContextMenuAction}
               />
             </div>
           </>
