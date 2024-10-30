@@ -74,7 +74,7 @@ const VisualScripting = () => {
     e.preventDefault();
     const rect = canvasRef.current.getBoundingClientRect();
     const { x, y } = camera.screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
-    
+
     const clickedNode = findClickedNode(x, y);
     if (clickedNode) {
       setNodeContextMenu({ visible: true, x, y });
@@ -241,21 +241,22 @@ const VisualScripting = () => {
 
   // #region Node Operations
   const findClickedNode = (x, y) => {
-    return nodes.find(node => 
-      node.isPointInside(x, y, renderer.getNodeDimensions(node, canvasRef.current.getContext('2d')))
-    );
+    return nodes.find(node => {
+      const nodeInstance = Node.createInstance(node, nodeTypes);
+      return nodeInstance.isPointInside(x, y, renderer.getNodeDimensions(node, canvasRef.current.getContext('2d')));
+    });
   };
 
   const findClickedPort = (x, y) => {
     for (const node of nodes) {
       const nodeType = nodeTypes[node.type];
       const dimensions = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
-      
+
       // Port icon dimensions (from Renderer.drawPortIcon)
       const portIconWidth = 6 * 1.5; // Base width of triangle * scale
       const portIconHeight = 10 * 1.5; // Base height of triangle * scale
       const portOffset = 5; // Distance from node border
-      
+
       // Calculate port Y position using the same logic as in drawEdges
       const getPortY = (index) => {
         const titleHeight = 25;
@@ -263,17 +264,17 @@ const VisualScripting = () => {
         const portVerticalGap = 5;
         return node.y + titleHeight + portVerticalGap + (index * portSpacing) + 4;
       };
-      
+
       // Check input ports
       for (let i = 0; i < nodeType.inputs.length; i++) {
         const portY = getPortY(i);
         const portX = node.x - portOffset;
-        
+
         // Create a square hitbox around the port
-        if (x >= portX - portIconWidth && 
-            x <= portX + portIconWidth && 
-            y >= portY - portIconHeight/2 && 
-            y <= portY + portIconHeight/2) {
+        if (x >= portX - portIconWidth &&
+          x <= portX + portIconWidth &&
+          y >= portY - portIconHeight / 2 &&
+          y <= portY + portIconHeight / 2) {
           return node.getPortPosition(i, true, dimensions);
         }
       }
@@ -282,12 +283,12 @@ const VisualScripting = () => {
       for (let i = 0; i < nodeType.outputs.length; i++) {
         const portY = getPortY(i);
         const portX = node.x + dimensions.width + portOffset;
-        
+
         // Create a square hitbox around the port
-        if (x >= portX - portIconWidth && 
-            x <= portX + portIconWidth && 
-            y >= portY - portIconHeight/2 && 
-            y <= portY + portIconHeight/2) {
+        if (x >= portX - portIconWidth &&
+          x <= portX + portIconWidth &&
+          y >= portY - portIconHeight / 2 &&
+          y <= portY + portIconHeight / 2) {
           return node.getPortPosition(i, false, dimensions);
         }
       }
@@ -313,7 +314,7 @@ const VisualScripting = () => {
       }
       return node;
     });
-    
+
     setUndoStack([...undoStack, { nodes, edges }]);
     setRedoStack([]);
     setNodes(updatedNodes);
@@ -325,7 +326,7 @@ const VisualScripting = () => {
       }
       return node;
     }));
-    
+
     setNeedsRedraw(true);
   };
 
@@ -339,6 +340,35 @@ const VisualScripting = () => {
         !selectedNodeIds.includes(edge.start.nodeId) && !selectedNodeIds.includes(edge.end.nodeId)
       ));
       setSelectedNodes([]);
+      setNeedsRedraw(true);
+    }
+  };
+
+  const setNodeLabel = () => {
+    if (selectedNodes.length === 0) return;
+
+    const currentNode = selectedNodes[0];
+    const newLabel = prompt('Enter node label:', currentNode.label || '');
+
+    if (newLabel !== null) {  // Check if user didn't cancel
+      setNodes(nodes.map(node => {
+        if (node.id === currentNode.id) {
+          const updatedNode = Node.createInstance(node, nodeTypes);
+          updatedNode.label = newLabel;
+          return updatedNode;
+        }
+        return node;
+      }));
+
+      setSelectedNodes(prevSelected => prevSelected.map(node => {
+        if (node.id === currentNode.id) {
+          const updatedNode = Node.createInstance(node, nodeTypes);
+          updatedNode.label = newLabel;
+          return updatedNode;
+        }
+        return node;
+      }));
+
       setNeedsRedraw(true);
     }
   };
@@ -381,19 +411,19 @@ const VisualScripting = () => {
         break;
       case 'loadExample':
         if (examples[param]) {
-          const exampleNodes = examples[param].nodes.map(node => 
+          const exampleNodes = examples[param].nodes.map(node =>
             Node.createFromExample(node, nodeTypes)
           );
-          
+
           // Reconstruct edges with proper port positions
           const reconstructedEdges = examples[param].edges.map(edge => {
             const startNode = exampleNodes.find(n => n.id === edge.start.nodeId);
             const endNode = exampleNodes.find(n => n.id === edge.end.nodeId);
-            
+
             if (startNode && endNode) {
               const startDimensions = renderer.getNodeDimensions(startNode, canvasRef.current.getContext('2d'));
               const endDimensions = renderer.getNodeDimensions(endNode, canvasRef.current.getContext('2d'));
-              
+
               return {
                 start: {
                   ...edge.start,
@@ -811,25 +841,27 @@ const VisualScripting = () => {
   const handleNodeContextMenuAction = (action) => {
     switch (action) {
       case 'copy':
-        setCopiedNodes([...selectedNodes]);
+        setCopiedNodes(selectedNodes.map(node => Node.createInstance(node, nodeTypes)));
         break;
       case 'delete':
         deleteSelectedNodes();
         break;
       case 'cut':
-        setCopiedNodes([...selectedNodes]);
+        setCopiedNodes(selectedNodes.map(node => Node.createInstance(node, nodeTypes)));
         deleteSelectedNodes();
         break;
       case 'duplicate':
         const newNodes = selectedNodes.map(node => {
-          // Create a proper Node instance using the static create method
           const duplicatedNode = Node.create(node.type, node.x + 20, node.y + 20, nodeTypes);
-          // Copy over the properties
           duplicatedNode.properties = { ...node.properties };
+          duplicatedNode.label = node.label;
           return duplicatedNode;
         });
         setNodes([...nodes, ...newNodes]);
         setSelectedNodes(newNodes);
+        break;
+      case 'setLabel':
+        setNodeLabel();
         break;
       default:
         console.log(`Unhandled node context menu action: ${action}`);

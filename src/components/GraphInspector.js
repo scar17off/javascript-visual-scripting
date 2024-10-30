@@ -136,11 +136,11 @@ const PropertyInput = ({ property, node, updateNodeProperty, isDarkTheme }) => {
 
   const updateCase = (index, field, value) => {
     const newCases = [...node.properties.cases];
-    newCases[index] = { 
-      ...newCases[index], 
+    newCases[index] = {
+      ...newCases[index],
       [field]: value,
-      value: field === 'type' && value === 'number' ? 
-        (isNaN(newCases[index].value) ? '0' : newCases[index].value) : 
+      value: field === 'type' && value === 'number' ?
+        (isNaN(newCases[index].value) ? '0' : newCases[index].value) :
         String(newCases[index].value)
     };
     updateNodeProperty('cases', newCases);
@@ -154,10 +154,10 @@ const PropertyInput = ({ property, node, updateNodeProperty, isDarkTheme }) => {
   const addCase = () => {
     const newCases = [
       ...(node.properties.cases || []),
-      { 
+      {
         value: '',
         type: 'string',
-        output: `Case ${(node.properties.cases || []).length + 1}` 
+        output: `Case ${(node.properties.cases || []).length + 1}`
       }
     ];
     updateNodeProperty('cases', newCases);
@@ -233,19 +233,19 @@ const GraphInspector = ({ selectedNodes, nodeTypes, updateNodeProperty, config }
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Properties</div>
             {nodeType.properties.map(prop => (
-              prop.visible === undefined || 
+              prop.visible === undefined ||
               (typeof prop.visible === 'function' ? prop.visible(node.properties) : prop.visible)
             ) && (
-              <div key={prop.name} className={styles.propertyContainer}>
-                <label className={styles.propertyLabel}>{prop.name}</label>
-                <PropertyInput 
-                  property={prop}
-                  node={node}
-                  updateNodeProperty={updateNodeProperty}
-                  isDarkTheme={config.isDarkTheme}
-                />
-              </div>
-            ))}
+                <div key={prop.name} className={styles.propertyContainer}>
+                  <label className={styles.propertyLabel}>{prop.name}</label>
+                  <PropertyInput
+                    property={prop}
+                    node={node}
+                    updateNodeProperty={updateNodeProperty}
+                    isDarkTheme={config.isDarkTheme}
+                  />
+                </div>
+              ))}
           </div>
           <hr className={styles.divider} />
         </>

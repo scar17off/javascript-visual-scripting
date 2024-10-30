@@ -50,14 +50,14 @@ class Renderer {
   getNodeDimensions(node, ctx) {
     const nodeType = nodeTypes[node.type];
     const maxPorts = Math.max(nodeType.inputs.length, nodeType.outputs.length);
-    
+
     ctx.font = `600 14px ${FONT_FAMILY}`;
-    
+
     const titleHeight = 25;
     const portSpacing = 14;
     const portVerticalGap = 5;
     const portsHeight = maxPorts > 0 ? (maxPorts - 1) * portSpacing + 20 + portVerticalGap : 0;
-    
+
     let propertiesHeight = 0;
     if (nodeType.properties) {
       const visibleProps = nodeType.properties.filter(prop => {
@@ -67,26 +67,26 @@ class Renderer {
       });
       propertiesHeight = visibleProps.length * 16;
     }
-    
+
     ctx.font = `500 12px ${FONT_FAMILY}`;
-    
-    const maxInputWidth = nodeType.inputs.reduce((max, input) => 
+
+    const maxInputWidth = nodeType.inputs.reduce((max, input) =>
       Math.max(max, ctx.measureText(input.name).width), 0);
-    
-    const maxOutputWidth = nodeType.outputs.reduce((max, output) => 
+
+    const maxOutputWidth = nodeType.outputs.reduce((max, output) =>
       Math.max(max, ctx.measureText(output.name).width), 0);
-    
+
     const portPadding = 40;
     const centerPadding = 40;
     const inputSection = maxInputWidth + portPadding;
     const outputSection = maxOutputWidth + portPadding;
-    
+
     const width = inputSection + outputSection + centerPadding;
-    const height = titleHeight + 
-                   (maxPorts > 0 ? portsHeight : 0) + 
-                   (propertiesHeight > 0 ? propertiesHeight + 10 : 0) +
-                   5;
-    
+    const height = titleHeight +
+      (maxPorts > 0 ? portsHeight : 0) +
+      (propertiesHeight > 0 ? propertiesHeight + 10 : 0) +
+      5;
+
     return {
       width,
       height,
@@ -140,7 +140,7 @@ class Renderer {
       const endDims = this.getNodeDimensions(endNode, ctx);
 
       if (!this.isRectInView(startNode.x, startNode.y, startDims.width, startDims.height, ctx.canvas.width, ctx.canvas.height, 200) &&
-          !this.isRectInView(endNode.x, endNode.y, endDims.width, endDims.height, ctx.canvas.width, ctx.canvas.height, 200)) {
+        !this.isRectInView(endNode.x, endNode.y, endDims.width, endDims.height, ctx.canvas.width, ctx.canvas.height, 200)) {
         return;
       }
 
@@ -174,10 +174,10 @@ class Renderer {
       ctx.stroke();
 
       // Get the port types
-      const startPortType = edge.start.isInput 
+      const startPortType = edge.start.isInput
         ? nodeTypes[startNode.type].inputs[edge.start.index].type
         : nodeTypes[startNode.type].outputs[edge.start.index].type;
-      
+
       const endPortType = edge.end.isInput
         ? nodeTypes[endNode.type].inputs[edge.end.index].type
         : nodeTypes[endNode.type].outputs[edge.end.index].type;
@@ -263,6 +263,7 @@ class Renderer {
       const nodeType = nodeTypes[node.type];
       this.drawNodeBody(ctx, node, dimensions, selectedNodes.includes(node));
       this.drawNodeContent(ctx, node, dimensions, nodeType, edges);
+      this.drawNodeLabel(ctx, node, dimensions);
     });
   }
 
@@ -298,7 +299,7 @@ class Renderer {
 
   drawNodeContent(ctx, node, dimensions, nodeType, edges) {
     let currentHeight = 20;
-    
+
     // Draw title with icon
     this.drawNodeTitle(ctx, node, currentHeight);
     currentHeight = this.drawNodeDescription(ctx, node, nodeType, dimensions, currentHeight);
@@ -310,7 +311,7 @@ class Renderer {
     ctx.fillStyle = 'white';
     ctx.font = `900 14px "Font Awesome 5 Free"`;
     ctx.fillText(this.getIconUnicode(getIconForNodeType(node.type)), node.x + 10, node.y + yPosition);
-    
+
     ctx.font = `600 14px ${FONT_FAMILY}`;
     ctx.fillText(node.type, node.x + 30, node.y + yPosition);
   }
@@ -336,16 +337,16 @@ class Renderer {
 
     nodeType.inputs.forEach((input, i) => {
       const portY = node.y + currentHeight + (i * 14);
-      const isConnected = edges.some(edge => 
-        edge.end.nodeId === node.id && 
-        edge.end.index === i && 
+      const isConnected = edges.some(edge =>
+        edge.end.nodeId === node.id &&
+        edge.end.index === i &&
         edge.end.isInput
       );
-      
+
       if (!isConnected) {
         this.drawPortIcon(ctx, node.x, portY, true);
       }
-      
+
       this.drawLabelArrow(ctx, node.x + 15, portY, input.type === 'control');
       ctx.fillStyle = 'white';
       ctx.fillText(input.name, node.x + 35, portY + 4);
@@ -353,24 +354,24 @@ class Renderer {
 
     nodeType.outputs.forEach((output, i) => {
       const portY = node.y + currentHeight + (i * 14);
-      const isConnected = edges.some(edge => 
-        edge.start.nodeId === node.id && 
-        edge.start.index === i && 
+      const isConnected = edges.some(edge =>
+        edge.start.nodeId === node.id &&
+        edge.start.index === i &&
         !edge.start.isInput
       );
-      
+
       if (!isConnected) {
         this.drawPortIcon(ctx, node.x + dimensions.width, portY, false);
       }
-      
+
       ctx.fillStyle = 'white';
       const textWidth = ctx.measureText(output.name).width;
       ctx.fillText(output.name, node.x + dimensions.width - textWidth - 35, portY + 4);
       this.drawLabelArrow(ctx, node.x + dimensions.width - 25, portY, output.type === 'control');
     });
 
-    return currentHeight + Math.max(nodeType.inputs.length, nodeType.outputs.length) * 14 + 
-           (nodeType.inputs.length > 0 && nodeType.outputs.length > 0 ? 5 : 0);
+    return currentHeight + Math.max(nodeType.inputs.length, nodeType.outputs.length) * 14 +
+      (nodeType.inputs.length > 0 && nodeType.outputs.length > 0 ? 5 : 0);
   }
 
   drawNodeProperties(ctx, node, nodeType, startHeight) {
@@ -382,18 +383,33 @@ class Renderer {
 
     nodeType.properties.forEach(prop => {
       if (prop.type === 'array') return;
-      
+
       const isVisible = prop.visible === undefined ||
         (typeof prop.visible === 'function' ? prop.visible(node.properties) : prop.visible);
 
       if (isVisible) {
         const displayValue = node.properties[prop.name] !== undefined ? node.properties[prop.name] : prop.default;
         if (typeof displayValue === 'object') return;
-        
+
         currentHeight += 16;
         ctx.fillText(`${prop.name}: ${displayValue}`, node.x + 10, node.y + currentHeight);
       }
     });
+  }
+
+  drawNodeLabel(ctx, node, dimensions) {
+    if (!node.label) return;
+
+    ctx.fillStyle = 'white';
+    ctx.font = `400 12px ${FONT_FAMILY}`;
+    const labelWidth = ctx.measureText(node.label).width;
+
+    // Draw label centered below the node
+    ctx.fillText(
+      node.label,
+      node.x + (dimensions.width - labelWidth) / 2,
+      node.y + dimensions.height + 20
+    );
   }
 
   drawConnectionLine(ctx, connecting, mousePosition, nodes) {
@@ -404,11 +420,11 @@ class Renderer {
 
     const { width } = this.getNodeDimensions(node, ctx);
     const portY = node.y + this.getNodeDimensions(node, ctx).portStartY + (connecting.index * 14) + 8;
-    
+
     // Calculate X position to start from middle of port
     const portOffset = 5;
     let portX;
-    
+
     if (connecting.isInput) {
       if (nodeTypes[node.type].inputs[connecting.index].type === 'control') {
         // For control input ports: start from middle of triangle

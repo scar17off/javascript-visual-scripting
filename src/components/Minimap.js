@@ -7,7 +7,7 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
     if (!nodes.length) return null;
 
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    
+
     nodes.forEach(node => {
       try {
         const { width, height } = getNodeDimensions(node, ctx);
@@ -69,8 +69,8 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
     ctx.fillStyle = 'white';
     ctx.font = `bold ${8 * scale}px Arial`;
     ctx.fillText(
-      node.type, 
-      (node.x - bounds.minX + 5) * scale, 
+      node.type,
+      (node.x - bounds.minX + 5) * scale,
       (node.y - bounds.minY + 15) * scale
     );
   };
@@ -78,7 +78,7 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
   const drawViewport = (ctx, camera, canvasSize, scale, bounds) => {
     const viewportWidth = canvasSize.width / camera.scale;
     const viewportHeight = canvasSize.height / camera.scale;
-    
+
     ctx.strokeStyle = 'red';
     ctx.lineWidth = 2;
     ctx.strokeRect(
@@ -92,7 +92,7 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
   const drawMinimap = useCallback(() => {
     const minimap = minimapRef.current;
     if (!minimap || !nodes || !edges) return;
-    
+
     const minimapCtx = minimap.getContext('2d');
     if (!minimapCtx) return;
 

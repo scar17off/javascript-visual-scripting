@@ -132,14 +132,14 @@ class CodeGenerator {
       case 'Random':
         const randomType = node.properties.type || 'number';
         const resultVar = this.getUniqueVariableName('randomResult');
-        
+
         switch (randomType) {
           case 'number':
             const min = parseFloat(node.properties.min) || 1;
             const max = parseFloat(node.properties.max) || 100;
             this.addLine(`const ${resultVar} = Math.floor(Math.random() * (${max} - ${min} + 1)) + ${min};`);
             break;
-            
+
           case 'string':
             const length = parseInt(node.properties.length) || 10;
             const charset = node.properties.charset || 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -150,7 +150,7 @@ class CodeGenerator {
             this.indentLevel--;
             this.addLine(`}`);
             break;
-            
+
           case 'boolean':
             const probability = parseFloat(node.properties.probability) || 50;
             this.addLine(`const ${resultVar} = Math.random() * 100 < ${probability};`);
@@ -158,7 +158,7 @@ class CodeGenerator {
           default:
             this.addLine(`// Unknown random type: ${node.properties.type}`);
         }
-        
+
         this.nodeOutputs.set(node.id, resultVar);
         break;
       case 'Switch':
@@ -170,7 +170,7 @@ class CodeGenerator {
 
         const ignoreCase = node.properties.ignoreCase;
         const cases = node.properties.cases || [];
-        
+
         if (ignoreCase) {
           this.addLine(`switch (${switchValue}.toString().toLowerCase()) {`);
         } else {
@@ -196,21 +196,21 @@ class CodeGenerator {
 
           this.addLine(`case ${caseValue}:`);
           this.indentLevel++;
-          
+
           // Find and generate code for the case branch
-          const caseEdge = this.edges.find(edge => 
-            edge.start.nodeId === node.id && 
+          const caseEdge = this.edges.find(edge =>
+            edge.start.nodeId === node.id &&
             edge.start.index === index + 1 && // +1 because index 0 is the default output
             !edge.start.isInput
           );
-          
+
           if (caseEdge) {
             const nextNode = this.nodes.find(n => n.id === caseEdge.end.nodeId);
             if (nextNode) {
               this.generateNodeCodeSequence(nextNode);
             }
           }
-          
+
           this.addLine('break;');
           this.indentLevel--;
         });
@@ -218,24 +218,24 @@ class CodeGenerator {
         // Default case
         this.addLine('default:');
         this.indentLevel++;
-        
+
         // Find and generate code for the default branch
-        const defaultEdge = this.edges.find(edge => 
-          edge.start.nodeId === node.id && 
-          edge.start.index === 0 && 
+        const defaultEdge = this.edges.find(edge =>
+          edge.start.nodeId === node.id &&
+          edge.start.index === 0 &&
           !edge.start.isInput
         );
-        
+
         if (defaultEdge) {
           const defaultNode = this.nodes.find(n => n.id === defaultEdge.end.nodeId);
           if (defaultNode) {
             this.generateNodeCodeSequence(defaultNode);
           }
         }
-        
+
         this.addLine('break;');
         this.indentLevel--;
-        
+
         this.indentLevel--;
         this.addLine('}');
         break;
@@ -275,7 +275,7 @@ class CodeGenerator {
   handleVariableNode(node) {
     const { name, type, initialValue } = node.properties;
     const inputValue = this.getNodeInputValue(node, 1);
-    
+
     if (!this.variables.has(name)) {
       // First time this variable is used - declare and initialize it
       let declaration = `${this.settings.useConst ? 'const' : 'let'} ${name}`;
@@ -290,7 +290,7 @@ class CodeGenerator {
       // Variable already declared, just update its value
       this.addLine(`${name} = ${inputValue}`);
     }
-    
+
     this.nodeOutputs.set(node.id, name);
   }
 
@@ -724,9 +724,9 @@ class CodeGenerator {
     this.indentLevel++;
 
     // Find and generate code for the 'True' branch
-    const trueEdge = this.edges.find(edge => 
-      edge.start.nodeId === node.id && 
-      edge.start.isInput === false && 
+    const trueEdge = this.edges.find(edge =>
+      edge.start.nodeId === node.id &&
+      edge.start.isInput === false &&
       edge.start.index === 0
     );
     if (trueEdge) {
@@ -741,9 +741,9 @@ class CodeGenerator {
     this.indentLevel++;
 
     // Find and generate code for the 'False' branch
-    const falseEdge = this.edges.find(edge => 
-      edge.start.nodeId === node.id && 
-      edge.start.isInput === false && 
+    const falseEdge = this.edges.find(edge =>
+      edge.start.nodeId === node.id &&
+      edge.start.isInput === false &&
       edge.start.index === 1
     );
     if (falseEdge) {

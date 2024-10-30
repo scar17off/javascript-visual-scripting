@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from './ContextMenu.module.css';
 
 const NodeContextMenu = ({ visible, x, y, camera, onAction }) => {
@@ -9,6 +9,7 @@ const NodeContextMenu = ({ visible, x, y, camera, onAction }) => {
     { icon: 'fa-trash', label: 'Delete', action: 'delete' },
     { icon: 'fa-cut', label: 'Cut', action: 'cut' },
     { icon: 'fa-clone', label: 'Duplicate', action: 'duplicate' },
+    { icon: 'fa-tag', label: 'Set Label', action: 'setLabel' },
   ];
 
   return (

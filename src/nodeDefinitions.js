@@ -2,8 +2,8 @@ export const nodeTypes = {
   OnStart: {
     color: '#4CAF50',
     inputs: [],
-    outputs: [{ 
-      type: 'control', 
+    outputs: [{
+      type: 'control',
       name: 'Next',
       description: 'Triggered when the script begins execution'
     }],
@@ -12,19 +12,19 @@ export const nodeTypes = {
   Log: {
     color: '#FF5722',
     inputs: [
-      { 
-        type: 'control', 
+      {
+        type: 'control',
         name: 'In',
         description: 'Triggers the log operation'
       },
-      { 
-        type: 'data', 
+      {
+        type: 'data',
         name: 'Message',
         description: 'The message to be logged'
       }
     ],
-    outputs: [{ 
-      type: 'control', 
+    outputs: [{
+      type: 'control',
       name: 'Out',
       description: 'Triggered after the message is logged'
     }],
@@ -55,8 +55,8 @@ export const nodeTypes = {
     color: '#607D8B',
     inputs: [
       { type: 'control', name: 'In' },
-      { 
-        type: 'data', 
+      {
+        type: 'data',
         name: 'param1',
         description: 'Parameter of type string'
       }
@@ -68,9 +68,9 @@ export const nodeTypes = {
     description: 'Defines a reusable function',
     properties: [
       { name: 'name', type: 'string', default: 'myFunction' },
-      { 
-        name: 'parameters', 
-        type: 'array', 
+      {
+        name: 'parameters',
+        type: 'array',
         default: [
           { name: 'param1', type: 'string' }
         ],
@@ -318,29 +318,29 @@ export const nodeTypes = {
   Switch: {
     color: '#FF9800',
     inputs: [
-      { 
-        type: 'control', 
+      {
+        type: 'control',
         name: 'In',
         description: 'Triggers the switch evaluation'
       },
-      { 
-        type: 'data', 
+      {
+        type: 'data',
         name: 'Value',
         description: 'The value to switch on'
       }
     ],
     outputs: [
-      { 
-        type: 'control', 
+      {
+        type: 'control',
         name: 'Default',
         description: 'Triggered if no cases match'
       }
     ],
     description: 'Branches based on matching cases',
     properties: [
-      { 
-        name: 'cases', 
-        type: 'array', 
+      {
+        name: 'cases',
+        type: 'array',
         default: [
           { value: '', type: 'string', output: 'Case 1' }
         ],
