@@ -9,16 +9,23 @@ This project is a web-based visual scripting environment that allows users to cr
 ## Features
 
 - Node-based visual programming interface
-- Support for various node types including control flow, data manipulation, functions, and more
-- Real-time code generation
-- Ability to run scripts with or without debugging
+- Support for various node types:
+  - Control flow (If, Switch, Loops)
+  - Data manipulation (Variables, Math Operations)
+  - Array and Object operations
+  - HTTP Requests
+  - JSON handling (Parse, Stringify)
+  - Base64 encoding/decoding
+- Real-time code generation with customizable settings
+- Ability to run scripts with debugging support
 - Undo/Redo functionality
-- Zoom and pan canvas controls
-- Save and load projects
-- Export projects as JSON or JavaScript
-- Dark and light theme options
-- Customizable grid and minimap
-- Example projects included
+- Canvas controls (zoom, pan)
+- Project management (save, load)
+- Export options (JSON, JavaScript, Image)
+- Theme customization (dark/light)
+- Grid and minimap visualization
+- Graph inspector panel
+- Predefined example projects
 
 ## Installation
 
@@ -46,23 +53,31 @@ This project is a web-based visual scripting environment that allows users to cr
 
 ## Usage
 
-1. Use the menu bar to create a new project, open an existing one, or load an example.
-2. Right-click on the canvas to open the context menu and add nodes.
-3. Connect nodes by clicking and dragging from one port to another.
-4. Use the property panel on the right to adjust node properties.
-5. Run your script using the "Run" menu options.
-6. Generate code using the "Generate code" option in the "Run" menu.
-7. Export your project as JSON or JavaScript using the "Export" menu.
+1. Use the menu bar to create a new project or load an example
+2. Add nodes by right-clicking on the canvas
+3. Connect nodes by dragging from one port to another
+4. Configure node properties using the Graph Inspector panel
+5. Use the Settings tab to customize:
+   - Theme preferences
+   - Canvas display options
+   - Code generation settings
+6. Generate and run your script using the Run menu
+7. Export your project in various formats
 
 ## Project Structure
 
 - `src/App.js`: Main application component
 - `src/VisualScripting.js`: Core visual scripting component
 - `src/CodeGenerator.js`: Handles code generation from nodes
-- `src/engine/Camera.js`: Manages canvas zoom and pan
-- `src/engine/Renderer.js`: Handles rendering of nodes and connections
 - `src/nodeDefinitions.js`: Defines available node types
-- `src/components/`: Contains React components for UI elements
+- `src/engine/`: Core engine components
+  - `Camera.js`: Manages canvas zoom and pan
+  - `Renderer.js`: Handles rendering of nodes and connections
+  - `Node.js`: Node class implementation
+- `src/components/`: React components for UI elements
+  - `GraphInspector.js`: Node properties panel
+  - `MenuBar.js`: Application menu
+  - `SettingsTab.js`: Configuration interface
 - `src/examples.js`: Predefined example projects
 
 ## Contributing
