@@ -11,12 +11,13 @@ import { nodeTypes, nodeGroups } from './nodeDefinitions';
 import examples from './examples';
 import { saveAs } from 'file-saver';
 import GraphInspector from './components/GraphInspector';
+import Node from './engine/Node';
 
 const VisualScripting = () => {
   // #region State Declarations
   const canvasRef = useRef(null);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
-  const [nodes, setNodes] = useState([]);
+  const [nodes, setNodes] = useState(() => []);
   const [edges, setEdges] = useState([]);
   const [draggingNode, setDraggingNode] = useState(null);
   const [connecting, setConnecting] = useState(null);
@@ -119,24 +120,9 @@ const VisualScripting = () => {
     const clickedPort = findClickedPort(x, y);
     if (clickedPort) {
       const node = nodes.find(n => n.id === clickedPort.nodeId);
-      const { width } = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
-      
-      const triangleWidth = 6;
-      const triangleHeight = 10;
-      const portOffset = 5;
-      
-      const portY = node.y + 35 + (clickedPort.index * 14);
-      const portYMiddle = portY + (triangleHeight / 2);
-      
-      const portX = clickedPort.isInput 
-        ? node.x - portOffset - (triangleWidth / 2)
-        : node.x + width + portOffset + (triangleWidth / 2);
-      
-      setConnecting({
-        ...clickedPort,
-        portY: portYMiddle,
-        portX
-      });
+      const dimensions = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
+      const portPosition = node.getPortPosition(clickedPort.index, clickedPort.isInput, dimensions);
+      setConnecting(portPosition);
     } else {
       const clickedNode = findClickedNode(x, y);
       if (clickedNode) {
@@ -160,15 +146,13 @@ const VisualScripting = () => {
       camera.move(dx, dy);
       setLastMousePosition({ x: e.clientX, y: e.clientY });
     } else if (draggingNode) {
-      setNodes(nodes.map(node =>
-        node.id === draggingNode.id
-          ? {
-            ...node,
-            x: x - draggingNode.offsetX,
-            y: y - draggingNode.offsetY
-          }
-          : node
-      ));
+      setNodes(nodes.map(node => {
+        if (node.id === draggingNode.id) {
+          return Node.createInstance(node, nodeTypes)
+            .moveTo(x - draggingNode.offsetX, y - draggingNode.offsetY);
+        }
+        return node;
+      }));
     }
 
     setMousePosition({ x, y });
@@ -236,68 +220,23 @@ const VisualScripting = () => {
 
   // #region Node Operations
   const findClickedNode = (x, y) => {
-    return nodes.find(node => {
-      const { width, height } = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
-
-      return x >= node.x && x <= node.x + width && y >= node.y && y <= node.y + height;
-    });
+    return nodes.find(node => 
+      node.isPointInside(x, y, renderer.getNodeDimensions(node, canvasRef.current.getContext('2d')))
+    );
   };
 
   const findClickedPort = (x, y) => {
-    const PORT_WIDTH = 6;
-    const PORT_HEIGHT = 10;
-    const PORT_OFFSET = 5;
-    const SCALE_MULTIPLIER = 1.5;
-    const VERTICAL_OFFSET = 2;
-
     for (const node of nodes) {
       const nodeType = nodeTypes[node.type];
-      const { width } = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
-
-      let currentHeight = 35; // Start after title (25 + 10 padding)
-
-      // Check input ports
-      for (let i = 0; i < nodeType.inputs.length; i++) {
-        const portX = node.x - PORT_OFFSET - PORT_WIDTH;
-        const portY = node.y + currentHeight + (i * 14);
-
-        if (x >= portX && x <= portX + PORT_WIDTH * SCALE_MULTIPLIER &&
-            y >= portY - VERTICAL_OFFSET && y <= portY + PORT_HEIGHT + VERTICAL_OFFSET) {
-          return { nodeId: node.id, isInput: true, index: i };
-        }
-      }
-
-      // Check output ports
-      for (let i = 0; i < nodeType.outputs.length; i++) {
-        const portX = node.x + width + PORT_OFFSET;
-        const portY = node.y + currentHeight + (i * 14);
-
-        if (x >= portX && x <= portX + PORT_WIDTH * SCALE_MULTIPLIER &&
-            y >= portY - VERTICAL_OFFSET && y <= portY + PORT_HEIGHT + VERTICAL_OFFSET) {
-          return { nodeId: node.id, isInput: false, index: i };
-        }
-      }
+      const dimensions = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
+      const clickedPort = node.findClickedPort(x, y, dimensions, nodeType);
+      if (clickedPort) return clickedPort;
     }
     return null;
   };
 
   const addNode = (type) => {
-    const nodeType = nodeTypes[type];
-    const newNode = {
-      id: Date.now(),
-      type,
-      x: contextMenu.x,
-      y: contextMenu.y,
-      properties: {}
-    };
-
-    // Initialize properties with default values
-    if (nodeType.properties) {
-      nodeType.properties.forEach(prop => {
-        newNode.properties[prop.name] = prop.default;
-      });
-    }
-
+    const newNode = Node.create(type, contextMenu.x, contextMenu.y, nodeTypes);
     const newNodes = [...nodes, newNode];
     setUndoStack([...undoStack, { nodes, edges }]);
     setRedoStack([]);
@@ -307,21 +246,26 @@ const VisualScripting = () => {
   };
 
   const updateNodeProperty = (property, value) => {
-    const updatedNodes = nodes.map(node =>
-      node.id === selectedNodes[0].id
-        ? { ...node, properties: { ...node.properties, [property]: value } }
-        : node
-    );
+    const updatedNodes = nodes.map(node => {
+      if (node.id === selectedNodes[0].id) {
+        return Node.createInstance(node, nodeTypes)
+          .updateProperty(property, value);
+      }
+      return node;
+    });
+    
     setUndoStack([...undoStack, { nodes, edges }]);
     setRedoStack([]);
     setNodes(updatedNodes);
 
-    // Update the selectedNodes state as well
-    setSelectedNodes(prevSelected => prevSelected.map(node =>
-      node.id === selectedNodes[0].id
-        ? { ...node, properties: { ...node.properties, [property]: value } }
-        : node
-    ));
+    setSelectedNodes(prevSelected => prevSelected.map(node => {
+      if (node.id === selectedNodes[0].id) {
+        return Node.createInstance(node, nodeTypes)
+          .updateProperty(property, value);
+      }
+      return node;
+    }));
+    
     setNeedsRedraw(true);
   };
 
@@ -377,38 +321,16 @@ const VisualScripting = () => {
         break;
       case 'loadExample':
         if (examples[param]) {
-          // Find any Switch nodes and update nodeTypes with dynamic outputs
-          examples[param].nodes.forEach(node => {
-            if (node.type === 'Switch' && node.properties.cases) {
-              const switchNode = nodeTypes['Switch'];
-              // Create a copy of the original outputs
-              const baseOutputs = [...switchNode.outputs];
-              
-              // Add case outputs dynamically
-              node.properties.cases.forEach((caseItem, index) => {
-                baseOutputs.splice(index, 0, {
-                  type: 'control',
-                  name: caseItem.output,
-                  description: `Triggered when value matches ${caseItem.value}`
-                });
-              });
-              
-              // Create a temporary node type with the dynamic outputs
-              nodeTypes['Switch'] = {
-                ...switchNode,
-                outputs: baseOutputs
-              };
-            }
-          });
-          
-          setNodes(examples[param].nodes);
+          const exampleNodes = examples[param].nodes.map(node => 
+            Node.createFromExample(node, nodeTypes)
+          );
+          setNodes(exampleNodes);
           setEdges(examples[param].edges);
           setUndoStack([]);
           setRedoStack([]);
         }
         break;
       case 'save':
-        // Implement file saving logic here
         const projectData = JSON.stringify({ nodes, edges });
         const blob = new Blob([projectData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
