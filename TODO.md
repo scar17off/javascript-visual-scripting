@@ -8,6 +8,3 @@
   - [ ] Delete node
 
 - [ ] Node labeling
-
-- [ ] Add new node types:
-  - [ ] Switch

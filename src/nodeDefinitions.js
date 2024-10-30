@@ -296,11 +296,50 @@ export const nodeTypes = {
         visible: (props) => props.type === 'boolean'
       }
     ]
+  },
+  Switch: {
+    color: '#FF9800',
+    inputs: [
+      { 
+        type: 'control', 
+        name: 'In',
+        description: 'Triggers the switch evaluation'
+      },
+      { 
+        type: 'data', 
+        name: 'Value',
+        description: 'The value to switch on'
+      }
+    ],
+    outputs: [
+      { 
+        type: 'control', 
+        name: 'Default',
+        description: 'Triggered if no cases match'
+      }
+    ],
+    description: 'Branches based on matching cases',
+    properties: [
+      { 
+        name: 'cases', 
+        type: 'array', 
+        default: [
+          { value: '', output: 'Case 1' }
+        ],
+        visible: true
+      },
+      {
+        name: 'ignoreCase',
+        type: 'boolean',
+        default: false,
+        visible: true
+      }
+    ]
   }
 };
 
 export const nodeGroups = {
-  "Control Flow": ["OnStart", "If", "Condition", "WhileLoop", "ForLoop"],
+  "Control Flow": ["OnStart", "If", "Condition", "WhileLoop", "ForLoop", "Switch"],
   "Data Manipulation": ["Variable", "MathOperation", "ArrayOperation", "ObjectOperation", "JSONParse", "JSONStringify", "Random"],
   "Functions": ["Function"],
   "Input/Output": ["Log", "HttpRequest"],

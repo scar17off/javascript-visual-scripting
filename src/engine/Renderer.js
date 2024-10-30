@@ -344,8 +344,11 @@ class Renderer {
               prop.visible(node.properties) :
               prop.visible);
 
-          if (isVisible) {
+          if (isVisible && prop.type !== 'array') { // Skip array type properties
             let displayValue = node.properties[prop.name] !== undefined ? node.properties[prop.name] : prop.default;
+            // Skip rendering if the value is an object
+            if (typeof displayValue === 'object') return;
+            
             const text = `${prop.name}: ${displayValue}`;
             currentHeight += 20;
             ctx.fillText(text, node.x + 10, node.y + currentHeight);

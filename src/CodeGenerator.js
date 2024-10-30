@@ -183,6 +183,71 @@ class CodeGenerator {
         
         this.nodeOutputs.set(node.id, resultVar);
         break;
+      case 'Switch':
+        const switchValue = this.getNodeInputValue(node, 1);
+        if (switchValue === undefined) {
+          this.addLine('// Warning: Switch node is missing input value');
+          return;
+        }
+
+        const ignoreCase = node.properties.ignoreCase;
+        const cases = node.properties.cases || [];
+        
+        if (ignoreCase) {
+          this.addLine(`switch (${switchValue}.toString().toLowerCase()) {`);
+        } else {
+          this.addLine(`switch (${switchValue}) {`);
+        }
+        this.indentLevel++;
+
+        // Generate case statements
+        cases.forEach((caseObj, index) => {
+          const caseValue = ignoreCase ? caseObj.value.toLowerCase() : caseObj.value;
+          this.addLine(`case ${JSON.stringify(caseValue)}:`);
+          this.indentLevel++;
+          
+          // Find and generate code for the case branch
+          const caseEdge = this.edges.find(edge => 
+            edge.start.nodeId === node.id && 
+            edge.start.index === index + 1 && // +1 because index 0 is the default output
+            !edge.start.isInput
+          );
+          
+          if (caseEdge) {
+            const nextNode = this.nodes.find(n => n.id === caseEdge.end.nodeId);
+            if (nextNode) {
+              this.generateNodeCodeSequence(nextNode);
+            }
+          }
+          
+          this.addLine('break;');
+          this.indentLevel--;
+        });
+
+        // Default case
+        this.addLine('default:');
+        this.indentLevel++;
+        
+        // Find and generate code for the default branch
+        const defaultEdge = this.edges.find(edge => 
+          edge.start.nodeId === node.id && 
+          edge.start.index === 0 && 
+          !edge.start.isInput
+        );
+        
+        if (defaultEdge) {
+          const defaultNode = this.nodes.find(n => n.id === defaultEdge.end.nodeId);
+          if (defaultNode) {
+            this.generateNodeCodeSequence(defaultNode);
+          }
+        }
+        
+        this.addLine('break;');
+        this.indentLevel--;
+        
+        this.indentLevel--;
+        this.addLine('}');
+        break;
       default:
         this.addLine(`// TODO: Implement ${node.type}`);
     }
