@@ -16,15 +16,21 @@ This project is a web-based visual scripting environment that allows users to cr
   - HTTP Requests
   - JSON handling (Parse, Stringify)
   - Base64 encoding/decoding
-- Real-time code generation with customizable settings
-- Ability to run scripts with debugging support
-- Undo/Redo functionality
-- Canvas controls (zoom, pan)
-- Project management (save, load)
-- Export options (JSON, JavaScript, Image)
+- Real-time code generation with customizable settings:
+  - Strict mode toggle
+  - Semicolon usage toggle
+  - Const/Let declaration choice
+  - Comment generation toggle
+- Canvas controls:
+  - Zoom and pan functionality
+  - Grid toggle
+  - Minimap visualization
+  - Node rounding options
 - Theme customization (dark/light)
-- Grid and minimap visualization
-- Graph inspector panel
+- Project management:
+  - Save/Load functionality
+  - Export options (JSON, JavaScript, Image)
+- Graph inspector panel with real-time node configuration
 - Predefined example projects
 
 ## Installation
@@ -78,6 +84,9 @@ This project is a web-based visual scripting environment that allows users to cr
   - `GraphInspector.js`: Node properties panel
   - `MenuBar.js`: Application menu
   - `SettingsTab.js`: Configuration interface
+  - `ContextMenu.js`: Right-click menu
+  - `NodeContextMenu.js`: Node-specific context menu
+  - `Minimap.js`: Canvas overview
 - `src/examples.js`: Predefined example projects
 
 ## Contributing

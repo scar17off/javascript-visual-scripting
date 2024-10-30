@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useCallback } from 'react';
 const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeTypes }) => {
   const minimapRef = useRef(null);
 
-  const calculateBounds = (nodes, ctx) => {
+  const calculateBounds = useCallback((nodes, ctx) => {
     if (!nodes.length) return null;
 
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -21,9 +21,9 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
     });
 
     return minX === Infinity ? null : { minX, minY, maxX, maxY };
-  };
+  }, [getNodeDimensions]);
 
-  const drawEdge = (ctx, edge, nodes, scale, bounds) => {
+  const drawEdge = useCallback((ctx, edge, nodes, scale, bounds) => {
     const startNode = nodes.find(n => n.id === edge.start.nodeId);
     const endNode = nodes.find(n => n.id === edge.end.nodeId);
     if (!startNode || !endNode) return;
@@ -40,9 +40,9 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
     ctx.strokeStyle = '#666';
     ctx.lineWidth = 1;
     ctx.stroke();
-  };
+  }, [getNodeDimensions]);
 
-  const drawNode = (ctx, node, scale, bounds) => {
+  const drawNode = useCallback((ctx, node, scale, bounds) => {
     const { width, height } = getNodeDimensions(node, ctx);
     const nodeType = nodeTypes[node.type];
 
@@ -73,7 +73,7 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
       (node.x - bounds.minX + 5) * scale,
       (node.y - bounds.minY + 15) * scale
     );
-  };
+  }, [getNodeDimensions, nodeTypes]);
 
   const drawViewport = (ctx, camera, canvasSize, scale, bounds) => {
     const viewportWidth = canvasSize.width / camera.scale;
@@ -121,7 +121,7 @@ const Minimap = ({ nodes, edges, camera, canvasSize, getNodeDimensions, nodeType
     nodes.forEach(node => drawNode(minimapCtx, node, scale, bounds));
     drawViewport(minimapCtx, camera, canvasSize, scale, bounds);
 
-  }, [nodes, edges, camera, canvasSize, getNodeDimensions, nodeTypes]);
+  }, [nodes, edges, camera, canvasSize, calculateBounds, drawEdge, drawNode]);
 
   useEffect(() => {
     try {

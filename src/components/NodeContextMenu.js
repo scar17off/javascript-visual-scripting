@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styles from './ContextMenu.module.css';
 
 const NodeContextMenu = ({ visible, x, y, camera, onAction }) => {
@@ -36,4 +36,4 @@ const NodeContextMenu = ({ visible, x, y, camera, onAction }) => {
   );
 };
 
-export default NodeContextMenu; 
+export default NodeContextMenu;
