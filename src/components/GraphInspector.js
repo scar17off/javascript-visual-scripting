@@ -67,23 +67,56 @@ const GraphInspector = ({
             <div className={styles.casesContainer}>
               {(node.properties.cases || []).map((caseObj, index) => (
                 <div key={index} className={styles.caseRow}>
-                  <input
-                    type="text"
-                    value={caseObj.value}
+                  <select
+                    value={caseObj.type || 'string'}
                     onChange={(e) => {
                       const newCases = [...node.properties.cases];
-                      newCases[index] = { ...caseObj, value: e.target.value };
+                      newCases[index] = { 
+                        ...caseObj, 
+                        type: e.target.value,
+                        // Convert value to match new type
+                        value: e.target.value === 'number' ? 
+                          (isNaN(caseObj.value) ? '0' : caseObj.value) : 
+                          String(caseObj.value)
+                      };
                       updateNodeProperty('cases', newCases);
                     }}
-                    placeholder="Case value"
-                    className={`${styles.input} ${config.isDarkTheme ? styles.inputDark : styles.inputLight}`}
-                  />
+                    className={`${styles.typeSelect} ${config.isDarkTheme ? styles.inputDark : styles.inputLight}`}
+                  >
+                    <option value="string">String</option>
+                    <option value="number">Number</option>
+                    <option value="boolean">Boolean</option>
+                  </select>
+                  {caseObj.type === 'boolean' ? (
+                    <select
+                      value={caseObj.value}
+                      onChange={(e) => {
+                        const newCases = [...node.properties.cases];
+                        newCases[index] = { ...caseObj, value: e.target.value };
+                        updateNodeProperty('cases', newCases);
+                      }}
+                      className={`${styles.input} ${config.isDarkTheme ? styles.inputDark : styles.inputLight}`}
+                    >
+                      <option value="true">true</option>
+                      <option value="false">false</option>
+                    </select>
+                  ) : (
+                    <input
+                      type={caseObj.type === 'number' ? 'number' : 'text'}
+                      value={caseObj.value}
+                      onChange={(e) => {
+                        const newCases = [...node.properties.cases];
+                        newCases[index] = { ...caseObj, value: e.target.value };
+                        updateNodeProperty('cases', newCases);
+                      }}
+                      placeholder="Case value"
+                      className={`${styles.input} ${config.isDarkTheme ? styles.inputDark : styles.inputLight}`}
+                    />
+                  )}
                   <button
                     onClick={() => {
                       const newCases = node.properties.cases.filter((_, i) => i !== index);
                       updateNodeProperty('cases', newCases);
-
-                      // Remove the corresponding output
                       nodeType.outputs = nodeType.outputs.filter((_, i) => i !== index + 1);
                     }}
                     className={`${styles.removeButton} ${config.isDarkTheme ? styles.removeButtonDark : styles.removeButtonLight}`}
@@ -96,11 +129,13 @@ const GraphInspector = ({
                 onClick={() => {
                   const newCases = [
                     ...(node.properties.cases || []),
-                    { value: '', output: `Case ${(node.properties.cases || []).length + 1}` }
+                    { 
+                      value: '',
+                      type: 'string',
+                      output: `Case ${(node.properties.cases || []).length + 1}` 
+                    }
                   ];
                   updateNodeProperty('cases', newCases);
-
-                  // Add new output
                   nodeType.outputs.push({
                     type: 'control',
                     name: `Case ${node.properties.cases.length + 1}`,

@@ -356,6 +356,30 @@ const VisualScripting = () => {
         break;
       case 'loadExample':
         if (examples[param]) {
+          // Find any Switch nodes and update nodeTypes with dynamic outputs
+          examples[param].nodes.forEach(node => {
+            if (node.type === 'Switch' && node.properties.cases) {
+              const switchNode = nodeTypes['Switch'];
+              // Create a copy of the original outputs
+              const baseOutputs = [...switchNode.outputs];
+              
+              // Add case outputs dynamically
+              node.properties.cases.forEach((caseItem, index) => {
+                baseOutputs.splice(index, 0, {
+                  type: 'control',
+                  name: caseItem.output,
+                  description: `Triggered when value matches ${caseItem.value}`
+                });
+              });
+              
+              // Create a temporary node type with the dynamic outputs
+              nodeTypes['Switch'] = {
+                ...switchNode,
+                outputs: baseOutputs
+              };
+            }
+          });
+          
           setNodes(examples[param].nodes);
           setEdges(examples[param].edges);
           setUndoStack([]);

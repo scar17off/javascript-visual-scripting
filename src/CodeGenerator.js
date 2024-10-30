@@ -23,7 +23,6 @@ class CodeGenerator {
       this.addLine();
     }
     this.generateImports();
-    this.generateVariableDeclarations();
     this.generateMainFunction();
     return this.code.trim(); // Trim to remove any trailing newlines
   }
@@ -31,27 +30,6 @@ class CodeGenerator {
   generateImports() {
     this.addLine("// Imports would go here");
     this.addLine();
-  }
-
-  generateVariableDeclarations() {
-    const declaredVariables = new Set();
-    this.nodes.forEach(node => {
-      if (node.type === 'Variable') {
-        const { name, type, initialValue } = node.properties;
-        if (name && type && !declaredVariables.has(name)) {
-          let declaration = `${this.settings.useConst ? 'const' : 'let'} ${name}`;
-          if (initialValue !== undefined && initialValue !== '') {
-            declaration += ` = ${this.getTypedValue(type, initialValue)}`;
-          }
-          this.addLine(declaration);
-          this.variables.set(name, type);
-          declaredVariables.add(name);
-        }
-      }
-    });
-    if (declaredVariables.size > 0) {
-      this.addLine();
-    }
   }
 
   generateMainFunction() {
@@ -202,8 +180,21 @@ class CodeGenerator {
 
         // Generate case statements
         cases.forEach((caseObj, index) => {
-          const caseValue = ignoreCase ? caseObj.value.toLowerCase() : caseObj.value;
-          this.addLine(`case ${JSON.stringify(caseValue)}:`);
+          // Convert the case value based on its type
+          let caseValue;
+          switch (caseObj.type) {
+            case 'number':
+              caseValue = Number(caseObj.value);
+              break;
+            case 'boolean':
+              caseValue = caseObj.value === 'true';
+              break;
+            default: // string
+              caseValue = ignoreCase ? caseObj.value.toLowerCase() : caseObj.value;
+              caseValue = JSON.stringify(caseValue);
+          }
+
+          this.addLine(`case ${caseValue}:`);
           this.indentLevel++;
           
           // Find and generate code for the case branch
@@ -282,11 +273,24 @@ class CodeGenerator {
   }
 
   handleVariableNode(node) {
-    const { name } = node.properties;
+    const { name, type, initialValue } = node.properties;
     const inputValue = this.getNodeInputValue(node, 1);
-    if (inputValue !== undefined && inputValue !== name) {
-      this.addLine(`${name} = ${inputValue};`);
+    
+    if (!this.variables.has(name)) {
+      // First time this variable is used - declare and initialize it
+      let declaration = `${this.settings.useConst ? 'const' : 'let'} ${name}`;
+      if (inputValue !== undefined) {
+        declaration += ` = ${inputValue}`;
+      } else if (initialValue !== undefined && initialValue !== '') {
+        declaration += ` = ${this.getTypedValue(type, initialValue)}`;
+      }
+      this.addLine(declaration);
+      this.variables.set(name, type);
+    } else if (inputValue !== undefined && inputValue !== name) {
+      // Variable already declared, just update its value
+      this.addLine(`${name} = ${inputValue}`);
     }
+    
     this.nodeOutputs.set(node.id, name);
   }
 
@@ -435,7 +439,8 @@ class CodeGenerator {
     } else {
       const indentation = '  '.repeat(this.indentLevel);
       const semicolon = this.settings.useSemicolons && this.shouldAddSemicolon(line) ? ';' : '';
-      this.code += `${indentation}${line}${semicolon}\n`;
+      const cleanLine = line.replace(/;$/, '');
+      this.code += `${indentation}${cleanLine}${semicolon}\n`;
     }
   }
 
@@ -692,8 +697,12 @@ class CodeGenerator {
       /^try/,
       /^catch/,
       /^finally/,
+      /^case\s/,  // Added to prevent semicolons after case statements
+      /^default:/, // Added to prevent semicolons after default:
       /\{$/,
       /\}$/,
+      /\};$/,     // Added to prevent double semicolons
+      /;$/,       // Added to prevent double semicolons
       // Also don't add semicolons after comments
       /^\/\//,
       /^\/\*/

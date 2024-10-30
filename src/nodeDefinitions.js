@@ -324,7 +324,7 @@ export const nodeTypes = {
         name: 'cases', 
         type: 'array', 
         default: [
-          { value: '', output: 'Case 1' }
+          { value: '', type: 'string', output: 'Case 1' }
         ],
         visible: true
       },
