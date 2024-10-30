@@ -697,12 +697,12 @@ class CodeGenerator {
       /^try/,
       /^catch/,
       /^finally/,
-      /^case\s/,  // Added to prevent semicolons after case statements
-      /^default:/, // Added to prevent semicolons after default:
+      /^case\s/,
+      /^default:/,
       /\{$/,
       /\}$/,
-      /\};$/,     // Added to prevent double semicolons
-      /;$/,       // Added to prevent double semicolons
+      /\};$/,
+      /;$/,
       // Also don't add semicolons after comments
       /^\/\//,
       /^\/\*/
