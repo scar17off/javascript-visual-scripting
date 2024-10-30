@@ -144,13 +144,28 @@ class Renderer {
         return;
       }
 
-      const startPort = startNode.getPortPosition(edge.start.index, edge.start.isInput, startDims);
-      const endPort = endNode.getPortPosition(edge.end.index, edge.end.isInput, endDims);
+      const getPortY = (node, dims, index) => {
+        const titleHeight = 25;
+        const portSpacing = 14;
+        const portVerticalGap = 5;
+        return node.y + titleHeight + portVerticalGap + (index * portSpacing) + 4;
+      };
+
+      const startPort = {
+        x: edge.start.isInput ? startNode.x : startNode.x + startDims.width,
+        y: getPortY(startNode, startDims, edge.start.index)
+      };
+
+      const endPort = {
+        x: edge.end.isInput ? endNode.x : endNode.x + endDims.width,
+        y: getPortY(endNode, endDims, edge.end.index)
+      };
 
       const dx = endPort.x - startPort.x;
       const controlPoint1 = { x: startPort.x + dx * 0.5, y: startPort.y };
       const controlPoint2 = { x: endPort.x - dx * 0.5, y: endPort.y };
 
+      // Draw the connection line
       ctx.beginPath();
       ctx.moveTo(startPort.x, startPort.y);
       ctx.bezierCurveTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, endPort.x, endPort.y);
@@ -158,7 +173,17 @@ class Renderer {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      if (nodeTypes[startNode.type].outputs[edge.start.index].type === 'control') {
+      // Get the port types
+      const startPortType = edge.start.isInput 
+        ? nodeTypes[startNode.type].inputs[edge.start.index].type
+        : nodeTypes[startNode.type].outputs[edge.start.index].type;
+      
+      const endPortType = edge.end.isInput
+        ? nodeTypes[endNode.type].inputs[edge.end.index].type
+        : nodeTypes[endNode.type].outputs[edge.end.index].type;
+
+      // Draw arrow if either port is a control type or if it's a data connection
+      if (startPortType === 'control' || endPortType === 'control' || startPortType === 'data' || endPortType === 'data') {
         this.drawArrow(ctx, endPort.x, endPort.y, Math.atan2(endPort.y - controlPoint2.y, endPort.x - controlPoint2.x));
       }
     });

@@ -251,16 +251,43 @@ const VisualScripting = () => {
       const nodeType = nodeTypes[node.type];
       const dimensions = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
       
+      // Port icon dimensions (from Renderer.drawPortIcon)
+      const portIconWidth = 6 * 1.5; // Base width of triangle * scale
+      const portIconHeight = 10 * 1.5; // Base height of triangle * scale
+      const portOffset = 5; // Distance from node border
+      
+      // Calculate port Y position using the same logic as in drawEdges
+      const getPortY = (index) => {
+        const titleHeight = 25;
+        const portSpacing = 14;
+        const portVerticalGap = 5;
+        return node.y + titleHeight + portVerticalGap + (index * portSpacing) + 4;
+      };
+      
       // Check input ports
       for (let i = 0; i < nodeType.inputs.length; i++) {
-        if (node.isPortClicked(x, y, i, true, dimensions)) {
+        const portY = getPortY(i);
+        const portX = node.x - portOffset;
+        
+        // Create a square hitbox around the port
+        if (x >= portX - portIconWidth && 
+            x <= portX + portIconWidth && 
+            y >= portY - portIconHeight/2 && 
+            y <= portY + portIconHeight/2) {
           return node.getPortPosition(i, true, dimensions);
         }
       }
 
       // Check output ports
       for (let i = 0; i < nodeType.outputs.length; i++) {
-        if (node.isPortClicked(x, y, i, false, dimensions)) {
+        const portY = getPortY(i);
+        const portX = node.x + dimensions.width + portOffset;
+        
+        // Create a square hitbox around the port
+        if (x >= portX - portIconWidth && 
+            x <= portX + portIconWidth && 
+            y >= portY - portIconHeight/2 && 
+            y <= portY + portIconHeight/2) {
           return node.getPortPosition(i, false, dimensions);
         }
       }
@@ -357,8 +384,34 @@ const VisualScripting = () => {
           const exampleNodes = examples[param].nodes.map(node => 
             Node.createFromExample(node, nodeTypes)
           );
+          
+          // Reconstruct edges with proper port positions
+          const reconstructedEdges = examples[param].edges.map(edge => {
+            const startNode = exampleNodes.find(n => n.id === edge.start.nodeId);
+            const endNode = exampleNodes.find(n => n.id === edge.end.nodeId);
+            
+            if (startNode && endNode) {
+              const startDimensions = renderer.getNodeDimensions(startNode, canvasRef.current.getContext('2d'));
+              const endDimensions = renderer.getNodeDimensions(endNode, canvasRef.current.getContext('2d'));
+              
+              return {
+                start: {
+                  ...edge.start,
+                  x: edge.start.isInput ? startNode.x : startNode.x + startDimensions.width,
+                  y: startNode.y + startDimensions.portStartY + (edge.start.index * 20)
+                },
+                end: {
+                  ...edge.end,
+                  x: edge.end.isInput ? endNode.x : endNode.x + endDimensions.width,
+                  y: endNode.y + endDimensions.portStartY + (edge.end.index * 20)
+                }
+              };
+            }
+            return null;
+          }).filter(edge => edge !== null);
+
           setNodes(exampleNodes);
-          setEdges(examples[param].edges);
+          setEdges(reconstructedEdges);
           setUndoStack([]);
           setRedoStack([]);
         }
