@@ -49,30 +49,77 @@ class Renderer {
 
   getNodeDimensions(node, ctx) {
     const nodeType = nodeTypes[node.type];
+    const maxPorts = Math.max(nodeType.inputs.length, nodeType.outputs.length);
+    
+    // Set font for measurements
     ctx.font = `600 14px ${FONT_FAMILY}`;
-    const titleWidth = ctx.measureText(node.type).width;
-
-    ctx.font = `400 13px ${FONT_FAMILY}`;
-    const descriptionLines = this.renderDescription ? this.wrapText(ctx, nodeType.description, 180) : [];
-    const descriptionHeight = this.renderDescription ? descriptionLines.length * 14 : 0;
-
-    const inputsHeight = nodeType.inputs.length * 20;
-    const outputsHeight = nodeType.outputs.length * 20;
-    const propertiesHeight = nodeType.properties ? nodeType.properties.reduce((height, prop) => {
-      const isVisible = prop.visible === undefined ||
-        (typeof prop.visible === 'function' ?
-          prop.visible(node.properties) :
-          prop.visible);
-      return height + (isVisible ? 20 : 0);
-    }, 0) : 0;
-
-    const width = Math.max(200, titleWidth + 20, ...(this.renderDescription ? descriptionLines.map(line => ctx.measureText(line).width + 20) : []));
-    const height = 35 + descriptionHeight + Math.max(inputsHeight, outputsHeight) + propertiesHeight;
-
+    
+    // Calculate title height
+    const titleHeight = 25;
+    
+    // Calculate ports area height with tighter spacing
+    const portSpacing = 14;
+    const portVerticalGap = 5; // Gap between input and output sections
+    const portsHeight = maxPorts > 0 ? (maxPorts - 1) * portSpacing + 20 + portVerticalGap : 0;
+    
+    // Calculate properties height - only for visible properties
+    let propertiesHeight = 0;
+    if (nodeType.properties) {
+      const visibleProps = nodeType.properties.filter(prop => {
+        if (prop.type === 'array') return false;
+        if (prop.visible === undefined) return true;
+        if (typeof prop.visible === 'function') {
+          return prop.visible(node.properties);
+        }
+        return prop.visible;
+      });
+      
+      propertiesHeight = visibleProps.length * 16;
+    }
+    
+    // Calculate required width based on port names
+    let maxInputWidth = 0;
+    let maxOutputWidth = 0;
+    
+    ctx.font = `500 12px ${FONT_FAMILY}`;
+    
+    // Measure input port names
+    nodeType.inputs.forEach(input => {
+      const textWidth = ctx.measureText(input.name).width;
+      maxInputWidth = Math.max(maxInputWidth, textWidth);
+    });
+    
+    // Measure output port names
+    nodeType.outputs.forEach(output => {
+      const textWidth = ctx.measureText(output.name).width;
+      maxOutputWidth = Math.max(maxOutputWidth, textWidth);
+    });
+    
+    // Calculate total width needed with guaranteed minimum spacing
+    const portPadding = 40;
+    const centerPadding = 40;
+    const inputSection = maxInputWidth + portPadding;
+    const outputSection = maxOutputWidth + portPadding;
+    
+    const width = inputSection + outputSection + centerPadding
+    
+    // Calculate total height with minimal padding
+    const height = titleHeight + 
+                   (maxPorts > 0 ? portsHeight : 0) + 
+                   (propertiesHeight > 0 ? propertiesHeight + 10 : 0) +
+                   5;
+    
+    // Calculate where ports should start (right after title)
+    const portStartY = titleHeight;
+    
     return {
       width,
       height,
-      portStartY: 35 + descriptionHeight
+      portStartY,
+      maxInputWidth,
+      maxOutputWidth,
+      inputSection,
+      outputSection
     };
   }
 
@@ -136,11 +183,11 @@ class Renderer {
       }
 
       const startPort = edge.start.isInput
-        ? { x: startNode.x, y: startNode.y + startDims.portStartY + edge.start.index * 20 }
-        : { x: startNode.x + startDims.width, y: startNode.y + startDims.portStartY + edge.start.index * 20 };
+        ? { x: startNode.x, y: startNode.y + startDims.portStartY + (edge.start.index * 14) + 8 }
+        : { x: startNode.x + startDims.width, y: startNode.y + startDims.portStartY + (edge.start.index * 14) + 8 };
       const endPort = edge.end.isInput
-        ? { x: endNode.x, y: endNode.y + endDims.portStartY + edge.end.index * 20 }
-        : { x: endNode.x + endDims.width, y: endNode.y + endDims.portStartY + edge.end.index * 20 };
+        ? { x: endNode.x, y: endNode.y + endDims.portStartY + (edge.end.index * 14) + 8 }
+        : { x: endNode.x + endDims.width, y: endNode.y + endDims.portStartY + (edge.end.index * 14) + 8 };
 
       // Calculate control points for the Bezier curve
       const dx = endPort.x - startPort.x;
@@ -177,16 +224,17 @@ class Renderer {
   drawPortIcon(ctx, x, y, isInput) {
     const offset = 5; // Distance from node border
     const arrowX = isInput ? x - offset : x + offset;
+    const portY = y;
 
     ctx.beginPath();
     if (isInput) {
-      ctx.moveTo(arrowX - 6, y - 5);
-      ctx.lineTo(arrowX - 6, y + 5);
-      ctx.lineTo(arrowX, y);
+      ctx.moveTo(arrowX - 6, portY - 5);
+      ctx.lineTo(arrowX - 6, portY + 5);
+      ctx.lineTo(arrowX, portY);
     } else {
-      ctx.moveTo(arrowX, y - 5);
-      ctx.lineTo(arrowX, y + 5);
-      ctx.lineTo(arrowX + 6, y);
+      ctx.moveTo(arrowX, portY - 5);
+      ctx.lineTo(arrowX, portY + 5);
+      ctx.lineTo(arrowX + 6, portY);
     }
     ctx.closePath();
     ctx.strokeStyle = '#999999';
@@ -225,7 +273,7 @@ class Renderer {
 
   drawNodes(ctx, nodes, edges, selectedNodes) {
     nodes.forEach(node => {
-      const { width, height } = this.getNodeDimensions(node, ctx);
+      const { width, height, inputSection, outputSection } = this.getNodeDimensions(node, ctx);
 
       if (!this.isRectInView(node.x, node.y, width, height, ctx.canvas.width, ctx.canvas.height)) {
         return;
@@ -290,10 +338,9 @@ class Renderer {
 
       // Input ports
       nodeType.inputs.forEach((input, i) => {
-        const portY = node.y + currentHeight + i * 20;
+        const portY = node.y + currentHeight + (i * 14);
         const isControl = input.type === 'control';
 
-        // Check if port is connected
         const isPortConnected = edges.some(edge =>
           edge.end.nodeId === node.id &&
           edge.end.index === i &&
@@ -306,12 +353,13 @@ class Renderer {
 
         this.drawLabelArrow(ctx, node.x + 15, portY, isControl);
         ctx.fillStyle = 'white';
-        ctx.fillText(input.name, node.x + 35, portY + 5);
+        ctx.fillText(input.name, node.x + 35, portY + 4);
       });
 
-      // Output ports
+      // Output ports - removed the initial gap
       nodeType.outputs.forEach((output, i) => {
-        const portY = node.y + currentHeight + i * 20;
+        // Calculate portY without the conditional gap
+        const portY = node.y + currentHeight + (i * 14);
         const isControl = output.type === 'control';
 
         const isPortConnected = edges.some(edge =>
@@ -326,31 +374,36 @@ class Renderer {
 
         ctx.fillStyle = 'white';
         const textWidth = ctx.measureText(output.name).width;
-        ctx.fillText(output.name, node.x + width - textWidth - 35, portY + 5);
+        ctx.fillText(output.name, node.x + width - textWidth - 35, portY + 4);
         this.drawLabelArrow(ctx, node.x + width - 25, portY, isControl);
       });
 
-      currentHeight += Math.max(nodeType.inputs.length, nodeType.outputs.length) * 15;
+      // Add the gap after drawing all ports if needed
+      currentHeight += Math.max(nodeType.inputs.length, nodeType.outputs.length) * 14;
+      if (nodeType.inputs.length > 0 && nodeType.outputs.length > 0) {
+        currentHeight += 5; // Only add gap if both inputs and outputs exist
+      }
 
-      // Node properties
+      // Node properties - only render non-array properties
       if (nodeType.properties) {
         ctx.fillStyle = 'white';
-        ctx.font = `500 13px ${FONT_FAMILY}`;
+        ctx.font = `500 12px ${FONT_FAMILY}`; // Slightly smaller font for properties
 
-        nodeType.properties.forEach((prop, index) => {
-          // Check if property should be visible
+        nodeType.properties.forEach(prop => {
+          // Skip array type properties and check visibility
+          if (prop.type === 'array') return;
+          
           const isVisible = prop.visible === undefined ||
             (typeof prop.visible === 'function' ?
               prop.visible(node.properties) :
               prop.visible);
 
-          if (isVisible && prop.type !== 'array') { // Skip array type properties
+          if (isVisible) {
             let displayValue = node.properties[prop.name] !== undefined ? node.properties[prop.name] : prop.default;
-            // Skip rendering if the value is an object
             if (typeof displayValue === 'object') return;
             
             const text = `${prop.name}: ${displayValue}`;
-            currentHeight += 20;
+            currentHeight += 16; // Reduced from 20
             ctx.fillText(text, node.x + 10, node.y + currentHeight);
           }
         });
@@ -359,26 +412,54 @@ class Renderer {
   }
 
   drawConnectionLine(ctx, connecting, mousePosition, nodes) {
-    const startNode = nodes.find(n => n.id === connecting.nodeId);
-    if (startNode) {
-      const { width } = this.getNodeDimensions(startNode, ctx);
-      const startX = connecting.isInput ? startNode.x : startNode.x + width;
-      const startY = startNode.y + this.getNodeDimensions(startNode, ctx).portStartY + connecting.index * 20;
-      const endX = mousePosition.x;
-      const endY = mousePosition.y;
+    if (!connecting) return;
 
-      // Calculate control points for the Bezier curve
-      const dx = endX - startX;
-      const controlPoint1 = { x: startX + dx * 0.5, y: startY };
-      const controlPoint2 = { x: endX - dx * 0.5, y: endY };
+    const node = nodes.find(n => n.id === connecting.nodeId);
+    if (!node) return;
 
-      ctx.beginPath();
-      ctx.moveTo(startX, startY);
-      ctx.bezierCurveTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, endX, endY);
-      ctx.strokeStyle = '#FFFF00';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+    const { width } = this.getNodeDimensions(node, ctx);
+    const portY = node.y + this.getNodeDimensions(node, ctx).portStartY + (connecting.index * 14) + 8;
+    
+    // Calculate X position to start from middle of port
+    const portOffset = 5;
+    let portX;
+    
+    if (connecting.isInput) {
+      if (nodeTypes[node.type].inputs[connecting.index].type === 'control') {
+        // For control input ports: start from middle of triangle
+        const triangleWidth = 6;
+        portX = node.x - portOffset - (triangleWidth / 2);
+      } else {
+        // For data input ports: start from middle of circle
+        portX = node.x - portOffset;
+      }
+    } else {
+      if (nodeTypes[node.type].outputs[connecting.index].type === 'control') {
+        // For control output ports: start from middle of triangle
+        const triangleWidth = 6;
+        portX = node.x + width + portOffset + (triangleWidth / 2);
+      } else {
+        // For data output ports: start from middle of circle
+        portX = node.x + width + portOffset + 5; // +5 to match the circle x position in drawLabelArrow
+      }
     }
+
+    const startX = portX;
+    const startY = portY;
+    const endX = mousePosition.x;
+    const endY = mousePosition.y;
+
+    // Calculate control points for the Bezier curve
+    const dx = endX - startX;
+    const controlPoint1 = { x: startX + dx * 0.5, y: startY };
+    const controlPoint2 = { x: endX - dx * 0.5, y: endY };
+
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.bezierCurveTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, endX, endY);
+    ctx.strokeStyle = '#999999';
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }
 
   setDarkTheme(isDarkTheme) {

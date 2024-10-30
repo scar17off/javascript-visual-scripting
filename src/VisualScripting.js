@@ -118,7 +118,25 @@ const VisualScripting = () => {
 
     const clickedPort = findClickedPort(x, y);
     if (clickedPort) {
-      setConnecting(clickedPort);
+      const node = nodes.find(n => n.id === clickedPort.nodeId);
+      const { width } = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
+      
+      const triangleWidth = 6;
+      const triangleHeight = 10;
+      const portOffset = 5;
+      
+      const portY = node.y + 35 + (clickedPort.index * 14);
+      const portYMiddle = portY + (triangleHeight / 2);
+      
+      const portX = clickedPort.isInput 
+        ? node.x - portOffset - (triangleWidth / 2)
+        : node.x + width + portOffset + (triangleWidth / 2);
+      
+      setConnecting({
+        ...clickedPort,
+        portY: portYMiddle,
+        portX
+      });
     } else {
       const clickedNode = findClickedNode(x, y);
       if (clickedNode) {
@@ -226,33 +244,36 @@ const VisualScripting = () => {
   };
 
   const findClickedPort = (x, y) => {
-    const PORT_WIDTH = 6;  // Width of the gray arrow
-    const PORT_HEIGHT = 10; // Height of the gray arrow
-    const PORT_OFFSET = 5;  // Distance from node border
-    const SCALE_MULTIPLIER = 1.5; // Scale multiplier for hit detection
+    const PORT_WIDTH = 6;
+    const PORT_HEIGHT = 10;
+    const PORT_OFFSET = 5;
+    const SCALE_MULTIPLIER = 1.5;
+    const VERTICAL_OFFSET = 2;
 
     for (const node of nodes) {
       const nodeType = nodeTypes[node.type];
-      const { width, portStartY } = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
+      const { width } = renderer.getNodeDimensions(node, canvasRef.current.getContext('2d'));
+
+      let currentHeight = 35; // Start after title (25 + 10 padding)
 
       // Check input ports
       for (let i = 0; i < nodeType.inputs.length; i++) {
-        const portX = node.x - PORT_OFFSET - PORT_WIDTH; // Position of gray arrow
-        const portY = node.y + portStartY + i * 20 - PORT_HEIGHT / 2;
+        const portX = node.x - PORT_OFFSET - PORT_WIDTH;
+        const portY = node.y + currentHeight + (i * 14);
 
         if (x >= portX && x <= portX + PORT_WIDTH * SCALE_MULTIPLIER &&
-          y >= portY && y <= portY + PORT_HEIGHT * SCALE_MULTIPLIER) {
+            y >= portY - VERTICAL_OFFSET && y <= portY + PORT_HEIGHT + VERTICAL_OFFSET) {
           return { nodeId: node.id, isInput: true, index: i };
         }
       }
 
       // Check output ports
       for (let i = 0; i < nodeType.outputs.length; i++) {
-        const portX = node.x + width + PORT_OFFSET; // Position of gray arrow
-        const portY = node.y + portStartY + i * 20 - PORT_HEIGHT / 2;
+        const portX = node.x + width + PORT_OFFSET;
+        const portY = node.y + currentHeight + (i * 14);
 
         if (x >= portX && x <= portX + PORT_WIDTH * SCALE_MULTIPLIER &&
-          y >= portY && y <= portY + PORT_HEIGHT * SCALE_MULTIPLIER) {
+            y >= portY - VERTICAL_OFFSET && y <= portY + PORT_HEIGHT + VERTICAL_OFFSET) {
           return { nodeId: node.id, isInput: false, index: i };
         }
       }
