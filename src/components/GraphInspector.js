@@ -153,8 +153,12 @@ const GraphInspector = ({
       </div>
 
       {/* Description */}
-      <div className={styles.description}>
-        {nodeType.description}
+      <hr className={styles.divider} />
+      <div className={styles.section}>
+        <div className={styles.sectionTitle}>Description</div>
+        <div className={styles.description}>
+          {nodeType.description}
+        </div>
       </div>
 
       <hr className={styles.divider} />
