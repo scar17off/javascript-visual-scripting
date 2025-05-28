@@ -16,22 +16,11 @@ This project is a web-based visual scripting environment that allows users to cr
   - HTTP Requests
   - JSON handling (Parse, Stringify)
   - Base64 encoding/decoding
-- Real-time code generation with customizable settings:
-  - Strict mode toggle
-  - Semicolon usage toggle
-  - Const/Let declaration choice
-  - Comment generation toggle
 - Canvas controls:
   - Zoom and pan functionality
   - Grid toggle
   - Minimap visualization
   - Node rounding options
-- Theme customization (dark/light)
-- Project management:
-  - Save/Load functionality
-  - Export options (JSON, JavaScript, Image)
-- Graph inspector panel with real-time node configuration
-- Predefined example projects
 
 ## Installation
 
@@ -56,38 +45,6 @@ This project is a web-based visual scripting environment that allows users to cr
    ```
 
 5. Open your browser and visit `http://localhost:3000`
-
-## Usage
-
-1. Use the menu bar to create a new project or load an example
-2. Add nodes by right-clicking on the canvas
-3. Connect nodes by dragging from one port to another
-4. Configure node properties using the Graph Inspector panel
-5. Use the Settings tab to customize:
-   - Theme preferences
-   - Canvas display options
-   - Code generation settings
-6. Generate and run your script using the Run menu
-7. Export your project in various formats
-
-## Project Structure
-
-- `src/App.js`: Main application component
-- `src/VisualScripting.js`: Core visual scripting component
-- `src/CodeGenerator.js`: Handles code generation from nodes
-- `src/nodeDefinitions.js`: Defines available node types
-- `src/engine/`: Core engine components
-  - `Camera.js`: Manages canvas zoom and pan
-  - `Renderer.js`: Handles rendering of nodes and connections
-  - `Node.js`: Node class implementation
-- `src/components/`: React components for UI elements
-  - `GraphInspector.js`: Node properties panel
-  - `MenuBar.js`: Application menu
-  - `SettingsTab.js`: Configuration interface
-  - `ContextMenu.js`: Right-click menu
-  - `NodeContextMenu.js`: Node-specific context menu
-  - `Minimap.js`: Canvas overview
-- `src/examples.js`: Predefined example projects
 
 ## Contributing
 
